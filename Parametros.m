@@ -1,6 +1,10 @@
 classdef Parametros
-
-	% Parametros     
+	% Descripción General:
+	% 
+	% PARAMETROS es una clase que construye un objeto con las 
+	% propiedades y/o parámetros utilizados en el cálculo.
+	% Aceleración de gravedad y la constante de von Kármán 
+	% son algunos ejemplos.     
     
     properties
 	aceleracionGravedad

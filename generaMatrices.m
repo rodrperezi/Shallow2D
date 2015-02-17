@@ -19,8 +19,10 @@ function matricesResolucion = generaMatrices(Cuerpo)
 	IDwe = mallaStaggered.IDwe;
 	IDns = mallaStaggered.IDns;
 	IDeta = mallaStaggered.IDeta;
+	hoeta =  zeros(length(Cuerpo.Geometria.batimetriaKranenburg.hoEta),1);     
 	howe =  Cuerpo.Geometria.batimetriaKranenburg.hoU;     
 	hons =  Cuerpo.Geometria.batimetriaKranenburg.hoV;
+	batimetria = [hoeta; howe; hons];
 	rho = Cuerpo.Fluido.densidadRho;
 	kap = Cuerpo.Parametros.kappaVonKarman;
 	zo = Cuerpo.Parametros.zoAsperezaAgua;
@@ -63,6 +65,8 @@ function matricesResolucion = generaMatrices(Cuerpo)
 	
 	
 	end
+
+	batimetria(del) = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	fila = (1:Neta)';
@@ -185,6 +189,7 @@ function matricesResolucion = generaMatrices(Cuerpo)
 	matricesResolucion.K = K;
 	matricesResolucion.C = C;
 	matricesResolucion.f = forzanteExterno;
+	matricesResolucion.batimetria = batimetria;
 
 
 

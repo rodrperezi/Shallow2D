@@ -27,7 +27,7 @@ classdef Geometria
 			thisGeometria.radioKranenburg = radioKranenburg; %m
 			thisGeometria.alturaKranenburg = alturaKranenburg; %m
 			thisGeometria.bordeSuperficie = generaBordeCircular(radioKranenburg, centroMasa);
-			thisGeometria.deltaX = 0.2*thisGeometria.radioKranenburg;
+			thisGeometria.deltaX = 0.1*thisGeometria.radioKranenburg;
 			thisGeometria.deltaY = thisGeometria.deltaX;
 			thisGeometria.Malla = Malla(thisGeometria.bordeSuperficie, thisGeometria.deltaX, thisGeometria.deltaY);
 			thisGeometria.batimetriaKranenburg = generaBatimetriaKranenburg(radioKranenburg, centroMasa, alturaKranenburg, thisGeometria.bordeSuperficie, thisGeometria.Malla);

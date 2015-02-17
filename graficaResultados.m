@@ -1,5 +1,7 @@
 function handleFigura = graficaResultados(Simulacion, motorDeCalculo, tipoDeGrafico)
 
+%function handleFigura = graficaResultados(Simulacion, motorDeCalculo, tipoDeGrafico)
+
 cuerpoAGraficar = Simulacion.Cuerpo;
 
 stringAyuda = ['solucionCompleta = Simulacion.Resultados.Hidrodinamica.',motorDeCalculo,'.solucionCompleta;'];

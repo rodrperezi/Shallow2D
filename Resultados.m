@@ -1,10 +1,24 @@
 classdef Resultados
-	% RESULTADOS es un objeto que contiene los resultados 
-	% obtenidos en una Simulación. Por ahora se consideran 
-	% dos motores de cálculo: AnalisisModal y CrankNicolson
-	% Cada una de estas propiedades de la clase alberga en la 
-	% una estructura la soluciónCompleta, la solucionEta, 	
-	% la solucionU y la solucionV.
+	% Descripción General: 
+	% 
+	% RESULTADOS es un objeto que contiene la solución obtenida
+	% al aplicar un motor de cálculo sobre un objeto de 
+	% clase CUERPO. Tiene dos propiedades: un objeto de 
+	% clase HIDRODINAMICA y otro de clase TRANSPORTE. Estos 
+	% contienen la solución al problema hidrodinámico y de
+	% transporte de masa, respectivamente.
+	%  
+	% Construcción: 
+	% 
+	% Se aplica a un objeto de clase CUERPO y se debe especificar
+	% el motor de cálculo. 
+	% 
+	% Ej: 
+	% 
+	%  resEjemplo = Resultados(cuerpoEjemplo, 'MotorEjemplo');
+	% 	
+	% Por ahora, los motores de cálculo disponibles son:	
+	% 'AnalisisModal' y 'CrankNicolson'.
 
 	properties
 
@@ -17,7 +31,6 @@ classdef Resultados
 
 		function thisResultados = Resultados(Cuerpo, MotorDeCalculo, varargin)
 
-			% if nargin == 2
 
 				if(strcmp(MotorDeCalculo, 'VolumenesFinitos'))
 					thisResultados.Transporte = Transporte(Cuerpo, varargin{2}, varargin{1});
@@ -25,21 +38,6 @@ classdef Resultados
 				else 
 					thisResultados.Hidrodinamica = Hidrodinamica(Cuerpo, MotorDeCalculo);
 				end
-
-%				if MotorDeCalculo == 'AnalisisModal'	
-%					% thisResultados.AnalisisModal = AnalisisModal(Cuerpo);
-%					% thisResultados.Hidrodinamica.AnalisisModal = AnalisisModal(Cuerpo);
-%					thisResultados.Hidrodinamica = Hidrodinamica(Cuerpo, MotorDeCalculo);
-%					
-%				elseif MotorDeCalculo == 'CrankNicolson'
-%					% thisResultados.CrankNicolson = CrankNicolson(Cuerpo);
-%					thisResultados.Hidrodinamica = CrankNicolson(Cuerpo);
-%				% elseif MotorDeCalculo == 'VolumenesFinitos'					
-%				% 	Transporte.
-%					% thisResultados.Transporte.CrankNicolson = CrankNicolson(Cuerpo);
-
-%				end		
-			% end		
 		end
 	end
 end
