@@ -1,0 +1,46 @@
+function matrizIntercalada = intercalaFilasNulas(matriz)
+	
+	[xNodos yNodos] = find(matriz' ~= 0);
+	[mFilas nCol] = size(matriz);
+	filaIntercalar = zeros(1,nCol);
+
+	if(min(yNodos) == 1)
+		matrizIntercalada = filaIntercalar;
+	else 
+		matrizIntercalada = [matriz(1:min(yNodos)-1,:); filaIntercalar];
+	end
+
+	for iFilas = min(yNodos):mFilas
+		matrizIntercalada = [matrizIntercalada; matriz(iFilas,:); filaIntercalar];
+	end
+
+end
+
+%% calculo nuevas coordenadas de nodosEta
+%[xNuevosNodos yNuevosNodos] = find(matrizIntercalada' ~=0);
+%% Las filas deberían haber cambiado con respecto a antes
+%% mientras que la posición en las columnas debería ser la misma
+%% Lo que hago ahora es recorrer los nodosEta y agrego -1 
+%% arriba y abajo de ellos, que es donde estarían ubicados los nodos v
+
+%for iNodo = 1:length(xNuevosNodos)
+%	matrizIntercalada(yNuevosNodos(iNodo)+1, xNuevosNodos(iNodo)) = -1;
+%	matrizIntercalada(yNuevosNodos(iNodo)-1, xNuevosNodos(iNodo)) = -1;
+%end
+
+%% Finalmente, enumero los nodos v
+
+%[xNodosV yNodosV] = find(matrizIntercalada' == -1);
+
+%for iEnum = 1:length(xNodosV) 
+%	matrizIntercalada(yNodosV(iEnum),xNodosV(iEnum)) = iEnum + numeroNodosEta;    
+%end
+
+%% Funciona. Entonces ahora hago esto mismo pero para los nodos U.
+
+%graficaNumerosMatriz(matrizIntercalada);
+
+
+
+
+% end

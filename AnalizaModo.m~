@@ -1,0 +1,90 @@
+clear all  
+close all 
+
+load simulacionExperimento
+
+valoresPropiosDerechos = cuerpoExperimento.valoresVectoresPropios.valoresPropios.derechos;
+valoresPropiosIzquierdos =  cuerpoExperimento.valoresVectoresPropios.valoresPropios.izquierdos;
+vectoresPropiosDerechos = cuerpoExperimento.valoresVectoresPropios.vectoresPropios.derechos;
+vectoresPropiosIzquierdos =  cuerpoExperimento.valoresVectoresPropios.vectoresPropios.izquierdos;
+
+[valoresAyuda Indices] = sort(abs(real(valoresPropiosDerechos)),'descend');
+valoresPropiosDerechosOrdenados = valoresPropiosDerechos(Indices);
+vectoresPropiosDerechosOrdenados = vectoresPropiosDerechos(:,Indices);
+
+indiceOmegaNoNulo = find(valoresAyuda ~= 0);
+
+valoresPropiosNoNulos = valoresPropiosDerechosOrdenados(indiceOmegaNoNulo);
+vectoresPropiosNoNulos = vectoresPropiosDerechosOrdenados(:, indiceOmegaNoNulo);
+
+indiceOmegaPositivo = find(real(valoresPropiosNoNulos) > 0);
+
+valoresPropiosOmegaPositivo = valoresPropiosNoNulos(indiceOmegaPositivo);
+vectoresPropiosOmegaPositivo = vectoresPropiosNoNulos(:,indiceOmegaPositivo);
+
+[valoresPropiosOmegaPositivo Indices]= sort(abs(real(valoresPropiosOmegaPositivo)), 'ascend');
+vectoresPropiosOmegaPositivo = vectoresPropiosOmegaPositivo(:, Indices);
+
+%for iModo = 1:length(valoresPropiosOmegaPositivo)
+
+%muestraModo = iModo;
+%omegaModo = abs(real(valoresPropiosOmegaPositivo(muestraModo)));
+%gammaModo = imag(valoresPropiosOmegaPositivo(muestraModo));
+%estructuraModo = vectoresPropiosOmegaPositivo(:, muestraModo);
+%tiempoFinal = 2*(2*pi/omegaModo);
+%time = 0:tiempoFinal/40:tiempoFinal;
+
+%%for iTiempo = 1:length(time)
+%iTiempo = 10;
+
+%	solucionModo = real(estructuraModo*exp(i*(omegaModo + i*gammaModo)*time(iTiempo)));
+% 	graficaModo(simulacionExperimento, solucionModo, 'Eta')	
+%%% 	colorbar
+%%	% graficaModo(solucionModo)
+%% 	pause
+
+%%% 	graficaModo(simulacionPrueba1, solucionModo, 'Eta')
+
+%%end
+%pause
+
+%end
+
+
+% for iModo = 1:length(valoresPropiosOmegaPositivo)
+iModo = 1;
+muestraModo = iModo;
+omegaModo = abs(real(valoresPropiosOmegaPositivo(muestraModo)));
+gammaModo = imag(valoresPropiosOmegaPositivo(muestraModo));
+estructuraModo = vectoresPropiosOmegaPositivo(:, muestraModo);
+tiempoFinal = 2*(2*pi/omegaModo);
+time = 0:tiempoFinal/40:tiempoFinal;
+
+for iTiempo = 1:length(time)
+% iTiempo = 10;
+
+	solucionModo = real(estructuraModo*exp(i*(omegaModo + i*gammaModo)*time(iTiempo)));
+ 	graficaModo(simulacionExperimento, solucionModo, 'Eta')	
+%  	graficaModo(simulacionExperimento, solucionModo, 'Eta')	
+%% 	colorbar
+%	% graficaModo(solucionModo)
+% 	pause
+
+%% 	graficaModo(simulacionPrueba1, solucionModo, 'Eta')
+
+%end
+pause
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
