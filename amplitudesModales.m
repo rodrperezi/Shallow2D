@@ -1,5 +1,8 @@
 function analisisModal = amplitudesModales(Cuerpo)
 
+% 
+
+
 matricesResolucion = Cuerpo.Matrices;
 b = matricesResolucion.f;
 M = matricesResolucion.M;

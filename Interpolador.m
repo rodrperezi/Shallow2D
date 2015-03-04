@@ -1,6 +1,7 @@
 function [valorInterpolado coordenadasInterpoladas] = Interpolador(Simulacion, solucionCompleta, tipoDeGrafico, nuevoDeltaX, nuevoDeltaY)
 
 cuerpoAnalisis = Simulacion.Cuerpo;
+
 bordeSuperficie = cuerpoAnalisis.Geometria.bordeSuperficie;
 mallaInterpolada = generaMallaStaggered(bordeSuperficie, nuevoDeltaX, nuevoDeltaY);
 % keyboard

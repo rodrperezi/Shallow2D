@@ -1,11 +1,13 @@
-function batimetria = generaBatimetriaKranenburg(Radio, Centro, H, borde, Malla)
+function thisBatimetria = generaBatimetriaKranenburg(thisBatimetria, Geometria)
 % generaBatimetriaKranenburg: Construye una estructura batimetria que contiene
 % los valores de la profundidad de la hoya en el estado no perturbado
 
-malla = Malla.InformacionMalla;
+malla = Geometria.Malla;
+centro = Geometria.centroMasa;
+Ro = Geometria.parametrosGeometria.Radio;
+H = Geometria.parametrosGeometria.Altura;
+borde = Geometria.Borde.coordenadasXY;
 
-centro = Centro;
-Ro = Radio;
 N = 1000; 
 xk = -Ro + 2*Ro.*rand(N,1) + centro(1);
 yk = (sqrt(Ro^2-(xk-centro(1)).^2)).*rand(N,1);
@@ -31,13 +33,8 @@ howe = F(malla.coordenadasU(:,1),malla.coordenadasU(:,2));
 hons = F(malla.coordenadasV(:,1),malla.coordenadasV(:,2));
 heta = F(malla.coordenadasEta(:,1),malla.coordenadasEta(:,2));
 
-% heta = [heta; zeros(size(xgeodat))];
-% coordbat = [xbat,ybat];
-
-% keyboard
-
-IDwe = malla.IDwe;
-IDns = malla.IDns;
+ IDwe = malla.matrizIDwe;
+IDns = malla.matrizIDns;
 
 fk = find(isnan(howe)==1);
 for i = 1:length(fk)
@@ -59,7 +56,8 @@ for i = 1:length(fk)
     hons(fk(i)) = heta(fink);
 end
 
-batimetria.hoU = howe*H;
-batimetria.hoV = hons*H;
-batimetria.hoEta = heta*H;
+thisBatimetria.hoNodosU = howe*H;
+thisBatimetria.hoNodosV = hons*H;
+thisBatimetria.hoNodosEta = heta*H;
+
 

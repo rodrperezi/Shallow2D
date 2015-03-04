@@ -1,6 +1,5 @@
 classdef Resultados
-	% Descripción General: 
-	% 
+
 	% RESULTADOS es un objeto que contiene la solución obtenida
 	% al aplicar un motor de cálculo sobre un objeto de 
 	% clase CUERPO. Tiene dos propiedades: un objeto de 
@@ -29,15 +28,8 @@ classdef Resultados
 
 	methods
 
-		function thisResultados = Resultados(Cuerpo, MotorDeCalculo, varargin)
-
-
-				if(strcmp(MotorDeCalculo, 'VolumenesFinitos'))
-					thisResultados.Transporte = Transporte(Cuerpo, varargin{2}, varargin{1});
-					% keyboard %AQUI ESTA EL ERROR
-				else 
-					thisResultados.Hidrodinamica = Hidrodinamica(Cuerpo, MotorDeCalculo);
-				end
+		function thisResultados = Resultados()
+				thisResultados;
 		end
 	end
 end

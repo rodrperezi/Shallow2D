@@ -1,74 +1,79 @@
-classdef Forzante
-
-	% FORZANTE es un tipo de forzante externo sobre el fluido.
-	% Por ahora tiene solo dos tipos de forzante externo.
-	%
-	% vientoUniforme: caracterizado por uAsteriscoViento constante en el espacio.
-	% oscilacionHorizontalX: Genera un oscilador que sigue la función:
-	%
-	%               x(t) = amplitudOscilador*sin(omegaOscilador*tiempo)
-	% 
-	% El forzante está hecho de manera que pueda ser utilizado en el análisis modal.
-	% En el caso de tener un forzante de tipo vientoUniforme, el nombre del parámetro 
-	% caracteristico deberá ser uAsterisco_anguloViento y su valor entregado en unidades SI (m/s) 
-        % para el uAsterisco y en rad para el angulo de desviación. En la direccion positiva del eje x
-        % el angulo es cero y crece positivamente en el sentido contrario de las manecillas del reloj
-	% Si el forzante es una oscilación horizontal entonces el nombre del parámetro 
-	% caracteristico deberá ser amplitud_frecuencia y se entrega un vector de 
-	% 1 fila y dos columnas en donde la primera columna contiene la amplitud de oscilación en 	
-	% unidades SI (m) y la segunda tiene la frecuencia de oscilación en rad/s.
+classdef Forzante < hgsetget
 
 	properties
-		tipoForzante
-		parametroCaracteristico1
-		valorParametroCaracteristico1
-		parametroCaracteristico2
-		valorParametroCaracteristico2
-		% vectorMagnitudForzante
-	end
+
+		Tipo
+		TipoTemporal
+		Parametros
+		Tiempo
+		DireccionX		
+		DireccionY
+
+
+	end %properties
+
 
 	methods
 
-		function this_forzante = Forzante(tipoForzante, parametroCaracteristico1, valorParametroCaracteristico1, parametroCaracteristico2, valorParametroCaracteristico2 )
-			
-			if(nargin ~= 5)
-				error('myapp:Chk','Wrong number of input arguments: Deberían ser cinco input')
-			elseif(strcmpi(tipoForzante, 'vientoUniforme') && strcmpi(parametroCaracteristico1, 'uAsterisco') && strcmpi(parametroCaracteristico2, 'anguloViento'))
+		function thisForzante = Forzante()
+			thisForzante;
+		end %function Forzante
 
-                                % if(length(valorParametroCaracteristico) ~= 2)
-				% 	error('myapp:Chk','Wrong number of input arguments: Falta especificar un parámetro del viento')
-				% else
-		 		        this_forzante.tipoForzante = tipoForzante;
-		 		        this_forzante.parametroCaracteristico1 = parametroCaracteristico1;
-		 		        this_forzante.valorParametroCaracteristico1 = valorParametroCaracteristico1;
-		 		        this_forzante.parametroCaracteristico2 = parametroCaracteristico2;
-		 		        this_forzante.valorParametroCaracteristico2 = valorParametroCaracteristico2;
+		function thisForzante = vientoUniforme(thisForzante, uAsterisco, anguloDireccion)
+			thisForzante.Tipo = 'vientoUniforme';
+			parametros.uAsterisco = uAsterisco;
+			parametros.anguloDireccion = anguloDireccion;
+			thisForzante.Parametros = parametros;
+			thisForzante.TipoTemporal = 'Permanente';
+			rho = 1000;
+			thisForzante.DireccionX = rho*uAsterisco^2*cos(anguloDireccion);
+			thisForzante.DireccionY = rho*uAsterisco^2*sin(anguloDireccion);
+			% obtener rho desde el fluido del cuerpo
+		end
 
-                                % end        
+		function thisForzante = aceleracionHorizontalOscilatoria(thisForzante, amplitud, omegaOscilacion, anguloDireccion)
+			thisForzante.Tipo = 'aceleracionHorizontalOscilatoria';
+			parametros.amplitud = amplitud;
+			parametros.omegaOscilacion = omegaOscilacion;
+			thisForzante.Parametros = parametros;
+			thisForzante.TipoTemporal = 'Impermanente';
+			nCiclos = 4;
+			datosPorCiclo = 20;
+			thisForzante.Tiempo = 0:(2*pi/omegaOscilacion)/(datosPorCiclo):nCiclos*(2*pi/omegaOscilacion).';
+			tiempo = thisForzante.Tiempo;
+			thisForzante.DireccionX = sparse(amplitud*omegaOscilacion^2*sin(omegaOscilacion*tiempo)*cos(anguloDireccion));
+			thisForzante.DireccionY = sparse(amplitud*omegaOscilacion^2*sin(omegaOscilacion*tiempo)*sin(anguloDireccion));
+		end
 
-			elseif(strcmpi(tipoForzante, 'oscilacionHorizontalX') && strcmpi(parametroCaracteristico, 'amplitud_frecuencia'))
+		function thisForzante = aceleracionHorizontal(thisForzante, magnitud, anguloDireccion)
+			thisForzante.Tipo = 'aceleracionHorizontal';
+			parametros.magnitud = magnitud;
+			thisForzante.Parametros = parametros;
+			thisForzante.TipoTemporal = 'Permanente';
+			thisForzante.DireccionX = magnitud*cos(anguloDireccion);
+			thisForzante.DireccionY = magnitud*sin(anguloDireccion);
+		end
 
-% 				if(length(valorParametroCaracteristico) ~= 2)
-% 					error('myapp:Chk','Wrong number of input arguments: Falta especificar un parámetro de la oscilación')			
-  %                               else
-%			 		this_forzante.tipoForzante = tipoForzante;
-%			 		this_forzante.parametroCaracteristico = parametroCaracteristico;
-%  				 	this_forzante.valorParametroCaracteristico = valorParametroCaracteristico;
-		 		        this_forzante.tipoForzante = tipoForzante;
-		 		        this_forzante.parametroCaracteristico1 = parametroCaracteristico1;
-		 		        this_forzante.valorParametroCaracteristico1 = valorParametroCaracteristico1;
-		 		        this_forzante.parametroCaracteristico2 = parametroCaracteristico2;
-		 		        this_forzante.valorParametroCaracteristico2 = valorParametroCaracteristico2;
+		% Esta funcion es critica, asi que no olvidarla
 
-% 				end
-			else 
-				error('myapp:Chk','Wrong name of input arguments: Alguno de los nombres está mal escrito')
-			end
-		end	
-	end
-end
+%		function thisForzante = serieAceleracion(thisForzante, archivo, anguloDireccion)
+%			thisForzante.Tipo = 'aceleracionHorizontal';
+%			parametros.amplitud = amplitud;
+%			parametros.omegaOscilacion = omegaOscilacion;
+%			thisForzante.Parametros = parametros;
+%			thisForzante.TipoTemporal = 'Impermanente';
+%			nCiclos = 4;
+%			datosPorCiclo = 10;
+%			thisForzante.Tiempo = 0:(2*pi/omegaOscilacion)/(datosPorCiclo):nCiclos*(2*pi/omegaOscilacion);
+%			tiempo = thisForzante.Tiempo;
+%			thisForzante.DireccionX = amplitud*omegaOscilacion^2*sin(omegaOscilacion*tiempo)*cos(anguloDireccion);
+%			thisForzante.DireccionY = amplitud*omegaOscilacion^2*sin(omegaOscilacion*tiempo)*sin(anguloDireccion);
+%		end
+
+
+	end %methods
+end %classdef
 
 	
-
 
 

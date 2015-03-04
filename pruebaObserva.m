@@ -7,103 +7,62 @@ set(0,'DefaultAxesFontSize', 9)
 set(0,'DefaultTextFontname', 'times')
 set(0,'DefaultTextFontSize', 9)
 
-% cd Modelo
 
-R = 0.18;
-H = 0.03;
-
-uAsteriscoViento = [0.0056, 0.01, 0.012, 0.0141]*100; %m/s
-
-cuerpoPrueba = Cuerpo;
-cuerpoPrueba.Geometria = Geometria(R, H, [0,0]);
-cuerpoPrueba.Forzante = Forzante('vientoUniforme','uAsterisco', uAsteriscoViento(1), 'anguloViento', pi/2);
-simulacionPrueba1 = Simulacion(cuerpoPrueba,'AnalisisModal');
-% simulacionPrueba1 = Simulacion(simulacionPrueba1,'CrankNicolson');
-%simulacionPrueba1 = Simulacion(simulacionPrueba1,'VolumenesFinitos');
-
-%subplot(2,2,1)
-
-%graficaResultados(simulacionPrueba1, 'AnalisisModal','Peclet')
+%R = 0.2;
+%H = 0.03;
+R = 200;
+H = 0.15;
 
 
-%for iUasterisco = 2:length(uAsteriscoViento)
+geoPrueba = Geometria();
+geoPrueba = construyeKranenburg(geoPrueba, R, H, [0, 0]);
+cuerpoPrueba = Cuerpo();
+cuerpoPrueba.Geometria = geoPrueba;
+simulacionPrueba = Simulacion();
+simulacionPrueba = Simulacion(simulacionPrueba, cuerpoPrueba);
 
-%	% figure
-%	subplot(2,2,iUasterisco)
-%	simulacionPrueba2 = simulacionPrueba1;
-%	simulacionPrueba2.Cuerpo.Forzante = Forzante('vientoUniforme','uAsterisco',  uAsteriscoViento(iUasterisco), 'anguloViento', pi/2);
-%	simulacionPrueba2 = Simulacion(simulacionPrueba2,'AnalisisModal');
-%	simulacionPrueba2 = Simulacion(simulacionPrueba2,'VolumenesFinitos');
-%	
-%	% graficaResultados(simulacionPrueba2, 'AnalisisModal','Concentracion')
-%	graficaResultados(simulacionPrueba2, 'AnalisisModal','Peclet')
+vientoForzante1 = vientoUniforme(Forzante(), 1e-2, 0);
+%vientoForzante2 = vientoUniforme(Forzante(), 2e-4, 0);
+%vientoForzante3 = vientoUniforme(Forzante(), 3e-4, 0);
+forz = Forzantes();
+forz = addForzante(forz, vientoForzante1);
+%forz = addForzante(forz, vientoForzante2);
+%forz = addForzante(forz, vientoForzante3);
 
-%end
+simulacionPrueba.Forzantes = forz;
+simulacionPrueba = asignaMatrices(Matrices(), simulacionPrueba);
+simulacionPrueba.AnalisisModal = AnalisisModal(simulacionPrueba,'permanente');
+%solucion = simulacionPrueba.AnalisisModal.Solucion;
+%graficaEta(simulacionPrueba, solucion)
+% simulacionPrueba.CrankNicolson = CrankNicolson(simulacionPrueba);
+% save('crankNicolson.mat')
 
 
-%figure
 
-%subplot(2,2,1)
 
-%graficaResultados(simulacionPrueba1, 'AnalisisModal','Concentracion')
+%omegaAceleracion = 113/60*2*pi; % 113 rpm 
+%aceleracionForzante1 = aceleracionHorizontalOscilatoria(Forzante(), 8e-3, omegaAceleracion, 0);
 
-%for iUasterisco = 2:length(uAsteriscoViento)
+% forz = addForzante(forz, aceleracionForzante1);
+%simulacionPrueba = asignaMatrices(Matrices(), simulacionPrueba);
+%simulacionPrueba.AnalisisModal = AnalisisModal(simulacionPrueba,'permanente');
 
-%	% figure
-%	subplot(2,2,iUasterisco)
-%	simulacionPrueba2 = simulacionPrueba1;
-%	simulacionPrueba2.Cuerpo.Forzante = Forzante('vientoUniforme','uAsterisco',  uAsteriscoViento(iUasterisco), 'anguloViento', pi/2);
-%	simulacionPrueba2 = Simulacion(simulacionPrueba2,'AnalisisModal');
-%	simulacionPrueba2 = Simulacion(simulacionPrueba2,'VolumenesFinitos');
-%	
-%	graficaResultados(simulacionPrueba2, 'AnalisisModal','Concentracion')
-%	% graficaResultados(simulacionPrueba2, 'AnalisisModal','Peclet')
+% save('modosPrueba.mat')
 
-%end
+
+% grafica(simulacionPrueba, simulacionPrueba.AnalisisModal.Solucion, 'eta')
 
 
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%forz2 = Forzantes();
+%forz2 = addForzante(forz2,aceleracionForzante1);
+%simulacionPrueba.Forzantes = forz;
+%simulacionPrueba = asignaMatrices(Matrices(), simulacionPrueba);
 
 
-
-
-
-
-
-
-% simulacionPrueba2 = Simulacion(simulacionPrueba1,'CrankNicolson');
-% graficaResultados(cuerpoPrueba, 'etaVelocidad');
-% subplot(1,2,1)
-% graficaResultados(simulacionPrueba1, 'AnalisisModal', 'Eta')
-% subplot(1,2,2)
-% graficaResultados(simulacionPrueba2, 'CrankNicolson', 'Eta')
-
-
-
-
-% valoresPropios = simulacionPrueba1.Cuerpo.valoresVectoresPropios.valoresPropios.derechos;
-% vectoresPropios = simulacionPrueba1.Cuerpo.valoresVectoresPropios.vectoresPropios.derechos; 
-% [valoresPropiosAyuda Indices] = sort(abs(real(valoresPropios)),'descend');
-
-% valoresPropiosOrdenados = valoresPropios(Indices);
-% vectoresPropiosOrdenados = vectoresPropios(:,Indices);
-
-% modoMuestra = 141;
-% omegaModo = abs(real(valoresPropiosOrdenados(modoMuestra)));
-% gammaModo = imag(valoresPropiosOrdenados(modoMuestra));
-% estructuraModo = vectoresPropiosOrdenados(:, modoMuestra);
-% tiempoFinal = 2*(2*pi/omegaModo);
-% time = 0:tiempoFinal/40:tiempoFinal;
-
-% for iTime = 1:length(time)
-% 	solucionModo = real(estructuraModo*exp(i*(omegaModo + i*gammaModo)*time(iTime)));
-% 	graficaModo(simulacionPrueba1, solucionModo, 'Eta')	
-% 	colorbar
-	% graficaModo(solucionModo)
-% 	pause
-% end
 
 
 

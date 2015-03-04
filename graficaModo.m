@@ -9,8 +9,11 @@ cuerpoAGraficar = Simulacion.Cuerpo;
 % eval(stringAyuda);
 solucionCompleta = solucionModo;
 
-R = cuerpoAGraficar.Geometria.radioKranenburg;
-H = cuerpoAGraficar.Geometria.alturaKranenburg;
+par = Simulacion.Cuerpo.Geometria.parametrosGeometria;
+R = par.Radio;
+H = par.Altura;
+% R = cuerpoAGraficar.Geometria.radioKranenburg;
+% H = cuerpoAGraficar.Geometria.alturaKranenburg;
 
 dx = cuerpoAGraficar.Geometria.deltaX;
 dy = cuerpoAGraficar.Geometria.deltaY;

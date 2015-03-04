@@ -1,12 +1,16 @@
-function malla = getMalla(varargin)
-
-	switch class(varargin{1})
-		case 'Cuerpo'
-			malla = varargin{1}.Geometria.Malla;
-		case 'Geometria'
-			malla = varargin{1}.Malla;
-		case 'Simulacion'
-			malla = varargin{1}.Cuerpo.Geometria.Malla;
-	end
-end
-
+	function thisMalla = getMalla(varargin)
+		if nargin == 1
+			switch class(varargin{:})
+				case 'Simulacion'				
+					thisMalla = varargin{:}.Cuerpo.Geometria.Malla;					
+				case 'Cuerpo'
+					thisMalla = varargin{:}.Geometria.Malla;
+				case 'Geometria'
+					thisMalla = varargin{:}.Malla;
+				case 'Malla'
+					thisMalla = varargin{:};
+				otherwise 
+					error(['El objeto ', class(varargin{:}), ' no contiene una Malla'])
+			end %switch
+		end %if
+	end %function getMalla

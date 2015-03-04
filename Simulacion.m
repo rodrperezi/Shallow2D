@@ -1,77 +1,50 @@
-classdef Simulacion
+classdef Simulacion < hgsetget
+
 	% SIMULACION es un objeto que contiene toda la informacion 
-	% que describe una simulacion. Se aplica a un cuerpo
+	% geométrica, forzantes, resultados entre otras
+	% caracteristícas de un problema.
 
 	properties
 
 		Cuerpo
-		Resultados
+		Forzantes
+		Matrices
+		AnalisisModal
+		CrankNicolson
 
 	end
 
 	methods
 
-		function thisSimulacion = Simulacion(varargin, MotorDeCalculo)
+		function thisSimulacion = Simulacion(thisSimulacion, varargin)
 
-			if nargin == 2
+			if nargin == 0
 
-				switch class(varargin)
+				thisSimulacion;
+	
+			else
 
-					case 'Cuerpo'
-						thisSimulacion.Cuerpo = varargin;
-						thisSimulacion.Resultados = Resultados(thisSimulacion.Cuerpo, MotorDeCalculo);
-						stringAyuda = ['thisSimulacion.Cuerpo = thisSimulacion.Resultados.Hidrodinamica.',MotorDeCalculo,'.CuerpoActualizado;'];
-						eval(stringAyuda);
-						stringAyuda = ['thisSimulacion.Resultados.Hidrodinamica.',MotorDeCalculo,'.CuerpoActualizado = [];'];
-						eval(stringAyuda);
+				for iVariable = 1:length(varargin)
+				
+					switch class(varargin{iVariable})
+						case 'Cuerpo'
+							thisSimulacion.Cuerpo = varargin{iVariable};
+						case 'Forzantes'
+							thisSimulacion.Forzantes = varargin{iVariable};
+						case 'Matrices'
+							thisSimulacion.Matrices = varargin{iVariable};
+						case 'AnalisisModal'
+							thisSimulacion.AnalisisModal = varargin{iVariable};
+						case 'CrankNicolson'
+							thisSimulacion.CrankNicolson = varargin{iVariable};
+						otherwise 
+							error(['Wrong input argument: Clase Simulacion no trabaja con ', class(varargin{iVariable})])
 
-					case 'Simulacion'
-						
-%						if(strcmp(MotorDeCalculo, 'VolumenesFinitos'))
-%							thisSimulacion.Resultados = Resultados(Cuerpo, MotorDeCalculo, 'sinDispersion');
-%						else 
+					end%switch
+				end%for
+			end %if
+		end%function Simulacion
 
-
-
-							if isempty(varargin.Resultados)
-								thisSimulacion.Cuerpo =	varargin.Cuerpo;					
-								thisSimulacion.Resultados = Resultados(thisSimulacion.Cuerpo, MotorDeCalculo);
-								thisSimulacion = actualizaCuerpo(thisSimulacion, MotorDeCalculo);							
-							else
-								
-								if(strcmp(MotorDeCalculo, 'VolumenesFinitos'))
-									thisSimulacion.Cuerpo =	varargin.Cuerpo;
-									% keyboard
-									resultadosPrevios = varargin.Resultados;
-									resultadosNuevos = Resultados(thisSimulacion.Cuerpo, MotorDeCalculo, 'sinDispersion', resultadosPrevios.Hidrodinamica);
-
-									% stringAyuda = ['resultadosPrevios.Transporte.',MotorDeCalculo,' = resultadosNuevos.Hidrodinamica.',MotorDeCalculo,';'];
-									% stringAyuda = ['resultadosPrevios.Transporte = resultadosNuevos.Transporte;'];
-									resultadosPrevios.Transporte = resultadosNuevos.Transporte;
-									% eval(stringAyuda);
-									thisSimulacion.Resultados = resultadosPrevios;
-									% thisSimulacion = actualizaCuerpo(thisSimulacion, MotorDeCalculo);
-
-								else
-
-									thisSimulacion.Cuerpo =	varargin.Cuerpo;
-									resultadosPrevios = varargin.Resultados;
-									resultadosNuevos = Resultados(thisSimulacion.Cuerpo, MotorDeCalculo);
-									stringAyuda = ['resultadosPrevios.Hidrodinamica.',MotorDeCalculo,' = resultadosNuevos.Hidrodinamica.',MotorDeCalculo,';'];
-									eval(stringAyuda);
-									thisSimulacion.Resultados = resultadosPrevios;
-									thisSimulacion = actualizaCuerpo(thisSimulacion, MotorDeCalculo);
-								end					
-							end
-
-						% end
-
-					otherwise
-					error('myapp:chk', 'Wrong input argument: el primer argumento debe ser de clase Cuerpo o clase Simulacion')
-
-				end
-			end		
-		end
-	end
-end
+	end%methods 
+end%classdef 
 
