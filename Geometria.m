@@ -16,7 +16,7 @@ classdef Geometria < hgsetget
 		deltaX
 		deltaY
        
-	    end
+	end
     
 	methods
 
@@ -47,7 +47,6 @@ classdef Geometria < hgsetget
 	
 
 		function thisGeometria = construyeKranenburg(thisGeometria, radio, altura, centroMasa)
-			% function thisGeometria = construyeKranenburg(thisGeometria, radio, altura, centroMasa)
 			% Función que construye la geometría de Kranenburg (1992)
 
 			thisGeometria.tipoGeometria = 'Kranenburg';		
@@ -56,11 +55,15 @@ classdef Geometria < hgsetget
 			thisGeometria.parametrosGeometria = parametrosGeometria;
 			thisGeometria.centroMasa = centroMasa;
 			thisGeometria.Borde = generaBordeCircular(Borde(), radio, centroMasa);
-			thisGeometria.deltaX = 0.25*radio;
-			thisGeometria.deltaY = thisGeometria.deltaX;
+			if isempty(thisGeometria.deltaX)		
+				thisGeometria.deltaX = 0.1*radio;
+				thisGeometria.deltaY = thisGeometria.deltaX;
+			end
 			thisGeometria.Malla = Malla(thisGeometria, 'staggered');
 			thisGeometria.Batimetria = batimetriaKranenburg(Batimetria(), thisGeometria);
 
 		end %function construyeKranenburg
+	
+
 	end %methods
 end %classdef

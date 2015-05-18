@@ -1,6 +1,7 @@
 	function [deltaX varargout]= getDeltaX(varargin)
 		if nargin == 1
-			geometria = getGeometria(varargin{:});
+			objeto = varargin{1};
+			geometria = getGeometria(objeto);
 			deltaX = geometria.deltaX;
 			deltaY = geometria.deltaY;
 

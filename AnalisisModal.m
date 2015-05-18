@@ -5,8 +5,9 @@ classdef AnalisisModal < Motor
 
 	properties 
 
-		TipoTemporal
-		Solucion	
+		RegimenTemporal
+		Solucion
+		Solucion2D	
 		Tiempo	
 		VyVPropios		
 	
@@ -14,482 +15,319 @@ classdef AnalisisModal < Motor
 
 	methods
 
-		function thisAnalisisModal = AnalisisModal(simulacion, tipoTemporal)
+		function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
+		% function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
+		% Constructor del objeto AnalisisModal
 					
 			thisAnalisisModal;
 			thisAnalisisModal.Tipo = 'AnalisisModal';
-			thisAnalisisModal.TipoTemporal = tipoTemporal;
-			thisAnalisisModal = analisisModal(thisAnalisisModal, simulacion);
-	
+			thisAnalisisModal.RegimenTemporal = regimenTemporal;
+			thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
+			thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
+			% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
+			% thisAnalisisModal.Solucion2D = Solucion2D;
+
 		end %function AnalisisModal
 
-		function thisAnalisisModal = analisisModal(thisAnalisisModal, simulacion)
-	
-			cuerpo = simulacion.Cuerpo;
-			forzantes = simulacion.Forzantes;
-			matrices = simulacion.Matrices;
-	
-			thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, matrices);
-			thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
+		function thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion)
+			% function valoresVectoresPropios = calculaVyVPropios(matrices)
+			% Calcula valores y vectores propios por la derecha y por la 
+			% izquierda. Para mayor información en la definición del problema
+			% ver Shimizu e Imberger (2008).
 
-			% keyboard
-
-			% Hasta aqui todo bien, se resuelve el problema de valores y vectores 
-			% propios. Me falta ver la influencia de los valores propios 	
-			% con omega = 0 sobre la solucion final.
-
-			% thisAnalisisModal = amplitudModal(thisAnalisisModal, matrices);
-
-
-			% keyboard
-		
-			% En esta seccion deberia implementar el calcula de la solucion 	
-			% al problema del analisis modal, es decir, calcular las 
-			% amplitudes modales y superponer la serie de amplitudes
-			% por modos para encontrar la solucion final.	
-			% Por lo tanto, puedo generar una rutina que haga el calculo 
-			% de las amplitudes modales, y otras que hagan la superposicion, 
-			% calculo de la energia, etc.
-
-
-			% la idea de esta funcion es que
-			% tome las matrices especificadas en la	
-			% simulacion y las procese para obtener 	
-			% el resultado pedido.
-			% 
-			% Las matrices especificadas en la simulacion son 
-			% M, K, C y el forzante externo f. Ademas, se incluye un 
-			% vector de tiempo y un compilado de la batimetría
-			% que sirve para multiplicar el vector de forzantes
-			% en el caso que corresponda como por ejemplo 
-			% en presencia de la aceleración horizontal.
-			% El compilado de batimetria aparace por promediar verticalmente
-			% Las ecuaciones de momentum.
-
-		end
-		
-		function thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, matrices)
-		% function valoresVectoresPropios = calculaVyVPropios(matrices)
-		% Calcula valores y vectores propios por la derecha y por la 
-		% izquierda. Para mayor información en la definición del problema
-		% ver Shimizu e Imberger (2008)
-
-			M = matrices.M;
-			K = matrices.K;
-			C = matrices.C;
-			ProblemaDerecha.valores = [];
-			ProblemaDerecha.vectores = [];
-			% [ProblemaDerecha.vectores, ProblemaDerecha.valores]= eig(full([K + C]), full(M));
-			[ProblemaDerecha.vectores, ProblemaDerecha.valores]= eig(full([K + C]), full(M),'qz');
-			ProblemaDerecha.valores = diag(ProblemaDerecha.valores);
-			% ProblemaDerecha.vectores = sparse(ProblemaDerecha.vectores);
-			ProblemaDerecha.vectores = ProblemaDerecha.vectores;
-	
-			ProblemaIzquierda.valores = [];
-			ProblemaIzquierda.vectores = [];
-			% [ProblemaIzquierda.vectores, ProblemaIzquierda.valores]	= eig(full([K + C]'), full(M));
-			[ProblemaIzquierda.vectores, ProblemaIzquierda.valores]	= eig(full([K + C]'), full(M),'qz');
-			ProblemaIzquierda.valores = diag(ProblemaIzquierda.valores);
-			% ProblemaIzquierda.vectores = sparse(ProblemaIzquierda.vectores);
-			ProblemaIzquierda.vectores = ProblemaIzquierda.vectores;
-
-			vyVPropios.ProblemaDerecha = ProblemaDerecha;
-			vyVPropios.ProblemaIzquierda = ProblemaIzquierda;
-
-			thisAnalisisModal.VyVPropios = vyVPropios;
-			thisAnalisisModal = ordenaModos(thisAnalisisModal);
+				[M, K, C] = getMatrices(simulacion);
 			
-			% Los valores propios están ordenados de una forma sublime
-			% En los vectores propios hay un desorden. El problema con los 
-			% vectores viene desde el cálculo mismo que realiza 
-			% el programa. Se puede verificar que los vectores propios
-			% de +r y -r no cumplen la relación especificada 
-			% en Shimizu e Imberger (2008) tal que \chi(+r) = \chi(-r)*
-			% donde el asterisco indica conjugado. Esta falla se repite 
-			% tanto para el problema con fricción y como para el problema 
-			% sin fricción.
+			% Resuelvo problema por la derecha. 
+		 	
+				[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
+				valoresDerecha = diag(valoresDerecha);
 
+			% Corto decimales que sean menores que la precision del programa
+
+				corta = 1e-16;
+				vectoresDerecha = quant(real(vectoresDerecha), corta) + i*quant(imag(vectoresDerecha), corta);
+				valoresDerecha = quant(real(valoresDerecha), corta) + i*quant(imag(valoresDerecha), corta);
+			
+			% Normaliza vectores propios de manera que tengan norma unitaria
+
+				normaDerecha = zeros(1,length(valoresDerecha));
+
+				for iNorma = 1:length(valoresDerecha)
+					normaDerecha(iNorma) = norm(vectoresDerecha(:,iNorma));
+				end
+
+				vectoresDerecha = vectoresDerecha./(repmat(normaDerecha, length(valoresDerecha), 1));
+
+			% Busco y borro valores propios nulos
+
+				fNuloDer = find(abs(valoresDerecha) < eps);
+				% valoresDerechaNulo = valoresDerecha(fNuloDer);
+				% vectoresDerechaNulo = vectoresDerecha(:,fNuloDer);
+				valoresDerecha(fNuloDer) =  [];
+				vectoresDerecha(:,fNuloDer) =  [];
+
+			% Busco y ordeno vectores con omega positivo.
+
+				fDerecha = find(real(valoresDerecha) > 0);
+				valoresDerechaMasR = valoresDerecha(fDerecha);
+				vectoresDerechaMasR = vectoresDerecha(:,fDerecha);
+				[valoresDerechaMasR indDerPos] = sort(valoresDerechaMasR);
+				vectoresDerechaMasR = vectoresDerechaMasR(:,indDerPos);
+
+			% Busco vectores con omega cero.
+
+				fDerechaOmegaCero = find(real(valoresDerecha) == 0);
+				valoresDerechaOmegaCero = valoresDerecha(fDerechaOmegaCero);
+				vectoresDerechaOmegaCero = vectoresDerecha(:,fDerechaOmegaCero);
+
+			% Ordena las partes imaginarias de los valores con omega cero. De menor a mayor
+
+				[valoresDerechaOmegaCero indDerechaOmegaCero]= sort(valoresDerechaOmegaCero);
+				vectoresDerechaOmegaCero = vectoresDerechaOmegaCero(:,indDerechaOmegaCero);
+
+			% Asigno problema de la izquierda en funcion del problema por la derecha. 
+			% Para entender la relacion entre ambos, ver Memoria.
+
+				VectoresDerecha.MasR = vectoresDerechaMasR;
+				VectoresDerecha.MenosR = conj(vectoresDerechaMasR);
+				VectoresDerecha.OmegaCero = vectoresDerechaOmegaCero;
+
+				ValoresDerecha.MasR = valoresDerechaMasR;		
+				ValoresDerecha.MenosR = -conj(valoresDerechaMasR);
+				ValoresDerecha.OmegaCero = valoresDerechaOmegaCero;		
+
+				ProblemaDerecha.Vectores = VectoresDerecha;
+				ProblemaDerecha.Valores = ValoresDerecha;
+		
+				ValoresIzquierda.MasR = conj(ValoresDerecha.MasR);
+				ValoresIzquierda.MenosR = conj(ValoresDerecha.MenosR);
+				ValoresIzquierda.OmegaCero = conj(ValoresDerecha.OmegaCero);		
+
+				ProblemaIzquierda.Vectores = VectoresDerecha;
+				ProblemaIzquierda.Valores = ValoresIzquierda;
+
+				VyVPropios.ProblemaDerecha = ProblemaDerecha;
+				VyVPropios.ProblemaIzquierda = ProblemaIzquierda;
+				thisAnalisisModal.VyVPropios = VyVPropios;
+				% keyboard
 		end %function calculaVyVPropios
-
 
 		function thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion)
 		
 			% Para realizar el calculo de las amplitudes modales, 	
-			% lo que necesito son los vyvpropios, el forzante 
-			% externo y la matriz M.
-		
-			geometria = simulacion.Cuerpo.Geometria;
-			deltaX = geometria.deltaX;
-			deltaY = geometria.deltaY;
-			numeroNodosEta = geometria.Malla.numeroNodosEta;
-			areaNumerica = deltaX*deltaY*numeroNodosEta;
-			matrices = simulacion.Matrices;			
-			M = matrices.M;
-			K = matrices.K;
-			C = matrices.C;
-			forzanteExterno = matrices.f;
-			problemaDerecha = thisAnalisisModal.VyVPropios.ProblemaDerecha;
-			problemaIzquierda = thisAnalisisModal.VyVPropios.ProblemaIzquierda;
-	
-			valoresDerechaMasR = problemaDerecha.MasR.valores;
-			vectoresDerechaMasR = problemaDerecha.MasR.vectores;
-			valoresDerechaMenosR = problemaDerecha.MenosR.valores;
-			vectoresDerechaMenosR = problemaDerecha.MenosR.vectores;
-			valoresDerechaOmegaNulo = problemaDerecha.OmegaNulo.valores;
-			vectoresDerechaOmegaNulo = problemaDerecha.OmegaNulo.vectores;
-
-			valoresIzquierdaMasR = problemaIzquierda.MasR.valores;
-			vectoresIzquierdaMasR = problemaIzquierda.MasR.vectores;
-			valoresIzquierdaMenosR = problemaIzquierda.MenosR.valores;
-			vectoresIzquierdaMenosR = problemaIzquierda.MenosR.vectores;
-			valoresIzquierdaOmegaNulo = problemaIzquierda.OmegaNulo.valores;
-			vectoresIzquierdaOmegaNulo = problemaIzquierda.OmegaNulo.vectores;
-
-			% Debo calcular los términos etilde(r), tanto para masR, menosR y para omega = 0
-
-			eTildeDerechaMasR = dot(vectoresIzquierdaMasR, M*vectoresDerechaMasR)*areaNumerica;
-			eTildeDerechaMenosR = dot(vectoresIzquierdaMenosR, M*vectoresDerechaMenosR)*areaNumerica;
-			eTildeDerechaOmegaNulo = dot(vectoresIzquierdaOmegaNulo, M*vectoresDerechaOmegaNulo)*areaNumerica;
-			iOMGeTildeDerMasR = i*dot(vectoresIzquierdaMasR, (K+C)*vectoresDerechaMasR)*areaNumerica;
-			iOMGeTildeDerMenosR = i*dot(vectoresIzquierdaMenosR, (K+C)*vectoresDerechaMenosR)*areaNumerica;
-			iOMGeTildeDerOmegaNulo = i*dot(vectoresIzquierdaOmegaNulo, (K+C)*vectoresDerechaOmegaNulo)*areaNumerica;
-
-			eTildeIzquierdaMasR = dot(vectoresDerechaMasR, M*vectoresIzquierdaMasR)*areaNumerica;
-			eTildeIzquierdaMenosR = dot(vectoresDerechaMenosR, M*vectoresIzquierdaMenosR)*areaNumerica;
-
-			% Aquí aún no incluyo lo que ocurriría con los términos con omega = 0
-
-			keyboard
-
-			if strcmpi(thisAnalisisModal.TipoTemporal, 'permanente')
-				% Si el problema se resuelve utilizando el régimen permanente,
-				% existen dos situaciones. Una en que el forzante externo 
-				% varíe temporalmente, como por ejemplo en el caso de un 
-				% forzante oscilatorio en el régimen permanente, o 
-				% que el forzante sea constante en el tiempo.
-				% Esta sección tiene que ser capaz de resolver ambos casos
-				
-				if isempty(matrices.Tiempo)
-					% Este es el caso en que el forzante es permanente
-					cuantosVectoresR = length(valoresIzquierdaMasR);					
-					cuantosVectoresOmegaNulo = length(valoresIzquierdaOmegaNulo);
-					fTildeMasR = dot(vectoresIzquierdaMasR, repmat(forzanteExterno, 1, cuantosVectoresR))*areaNumerica;
-					fTildeMenosR = dot(vectoresIzquierdaMenosR, repmat(forzanteExterno, 1, cuantosVectoresR))*areaNumerica;
-					fTildeOmegaNulo = dot(vectoresIzquierdaOmegaNulo, repmat(forzanteExterno, 1, cuantosVectoresOmegaNulo))*areaNumerica;
-
-					aTildeDerechaMasR = -fTildeMasR./(iOMGeTildeDerMasR);
-					aTildeDerechaMenosR = -fTildeMenosR./(iOMGeTildeDerMenosR);
-					aTildeDerechaOmegaNulo = -fTildeOmegaNulo./(iOMGeTildeDerOmegaNulo);
-						
-					solAcumulada = sparse(length(vectoresIzquierdaMasR(:,1)),1);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SIN VECTORES CON OMEGA = 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%					for iRModo = 1:repite
-%				
-%						solAuxiliar = aTildeDerechaMasR(iRModo)*vectoresDerechaMasR(:,iRModo) + aTildeDerechaMenosR(iRModo)*vectoresDerechaMenosR(:,iRModo);
-%						solAcumulada = solAcumulada + solAuxiliar;
-%													
-%					end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONSIDERANDO VECTORES CON OMEGA = 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-					for iRModo = 1:cuantosVectoresR
-				
-						solAuxiliar = aTildeDerechaMasR(iRModo)*vectoresDerechaMasR(:,iRModo) + aTildeDerechaMenosR(iRModo)*vectoresDerechaMenosR(:,iRModo);
-						solAcumulada = solAcumulada + solAuxiliar;
-													
-					end
-
-					% Ahora sumo los vectores que tienen omega = 0
-					for iOmegaNulo = 1:cuantosVectoresOmegaNulo
-				
-						solAuxiliar = aTildeDerechaOmegaNulo(iOmegaNulo)*vectoresDerechaOmegaNulo(:,iOmegaNulo);
-						solAcumulada = solAcumulada + solAuxiliar;
-													
-					end
-	
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			% necesito los vyvpropios, el forzante externo y las 
+			% matrices
 			
-					thisAnalisisModal.Solucion = solAcumulada;
+				geometria = simulacion.Cuerpo.Geometria;
+				deltaX = geometria.deltaX;
+				deltaY = geometria.deltaY;
+				[M, K, C] = getMatrices(simulacion);
+				forzanteExterno = simulacion.Matrices.f;
+				tiempoForzante = simulacion.Matrices.Tiempo;
+				problemaDerecha = thisAnalisisModal.VyVPropios.ProblemaDerecha;
+				problemaIzquierda = thisAnalisisModal.VyVPropios.ProblemaIzquierda;
 
-	
-				else
+				vectoresDerechaMasR = problemaDerecha.Vectores.MasR;
+				vectoresDerechaMenosR = problemaDerecha.Vectores.MenosR;
+				vectoresDerechaOmegaCero = problemaDerecha.Vectores.OmegaCero;
+
+				vectoresIzquierdaMasR = problemaIzquierda.Vectores.MasR;
+				vectoresIzquierdaMenosR = problemaIzquierda.Vectores.MenosR;
+				vectoresIzquierdaOmegaCero = problemaIzquierda.Vectores.OmegaCero;
+
+				cuantosVectoresR = length(problemaIzquierda.Valores.MasR);					
+				cuantosVectoresOmegaCero = length(problemaIzquierda.Valores.OmegaCero);
+
+		        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+				eTildeDerechaMasR = dot(vectoresIzquierdaMasR, M*vectoresDerechaMasR)*deltaX*deltaY;
+				eTildeDerechaMenosR = dot(vectoresIzquierdaMenosR, M*vectoresDerechaMenosR)*deltaX*deltaY;
+				eTildeDerechaOmegaCero = dot(vectoresIzquierdaOmegaCero, M*vectoresDerechaOmegaCero)*deltaX*deltaY;
+
+%				eTildeIzquierdaMasR = dot(vectoresDerechaMasR, M*vectoresIzquierdaMasR)*deltaX*deltaY;
+%				eTildeIzquierdaMenosR = dot(vectoresDerechaMenosR, M*vectoresIzquierdaMenosR)*deltaX*deltaY;
+%				eTildeIzquierdaOmegaCero = dot(vectoresDerechaOmegaCero, M*vectoresIzquierdaOmegaCero)*deltaX*deltaY;
+%				keyboard
+				iOMGeTildeDerMasR = i*dot(vectoresIzquierdaMasR, (K+C)*vectoresDerechaMasR)*deltaX*deltaY;
+				iOMGeTildeDerMenosR = i*dot(vectoresIzquierdaMenosR, (K+C)*vectoresDerechaMenosR)*deltaX*deltaY;
+				iOMGeTildeDerOmegaCero = i*dot(vectoresIzquierdaOmegaCero, (K+C)*vectoresDerechaOmegaCero)*deltaX*deltaY;
+
+				if strcmpi(thisAnalisisModal.RegimenTemporal, 'permanente')
+					% Si el problema se resuelve utilizando el régimen permanente,
+					% existen dos situaciones. Una en que el forzante externo 
+					% varíe temporalmente, como por ejemplo en el caso de un 
+					% forzante oscilatorio en el régimen permanente, o 
+					% que el forzante sea constante en el tiempo.
+					% Esta sección tiene que ser capaz de resolver ambos casos
+				
+					if isempty(tiempoForzante)
+						% Este es el caso en que el forzante es permanente
+
+						fTildeMasR = dot(vectoresIzquierdaMasR, repmat(forzanteExterno, 1, cuantosVectoresR))*deltaX*deltaY;
+						fTildeMenosR = dot(vectoresIzquierdaMenosR, repmat(forzanteExterno, 1, cuantosVectoresR))*deltaX*deltaY;
+						fTildeOmegaCero = dot(vectoresIzquierdaOmegaCero, repmat(forzanteExterno, 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+
+						aTildeDerechaMasR = -fTildeMasR./(iOMGeTildeDerMasR);
+						aTildeDerechaMenosR = -fTildeMenosR./(iOMGeTildeDerMenosR);
+						aTildeDerechaOmegaCero = -fTildeOmegaCero./(iOMGeTildeDerOmegaCero);
+
+						% keyboard
+
+						solModosR = sparse(length(vectoresIzquierdaMasR(:,1)),1);
+						solModosOmegaCero = solModosR;
+						solAcumulada = solModosR;
+
+						%%%%%%%%%%%%%%%%%%%%%%%%%% SUMO MODOS R %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+						for iModo = 1:cuantosVectoresR
+				
+							solAuxiliar = aTildeDerechaMasR(iModo)*vectoresDerechaMasR(:,iModo) + aTildeDerechaMenosR(iModo)*vectoresDerechaMenosR(:,iModo);
+							solModosR = solModosR + solAuxiliar;
+
+						end
+						%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+						%%%%%%%%%%%%%%%%% SUMO MODOS OMEGA = 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+						for iModo = 1:cuantosVectoresOmegaCero
+				
+							solAuxiliar = aTildeDerechaOmegaCero(iModo)*vectoresDerechaOmegaCero(:,iModo);
+							solModosOmegaCero = solModosOmegaCero + solAuxiliar;
+													
+						end
+						%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+						solAcumulada = solModosR + solModosOmegaCero;
+
+						sPlot(1) = subplot(2,2,1);
+						graficaModo(simulacion, solModosR)
+						sPlot(2) = subplot(2,2,2);
+						graficaModo(simulacion, solModosOmegaCero)
+						sPlot(3) = subplot(2,2,3);
+						graficaModo(simulacion, solAcumulada)
+
+						% keyboard					
+						thisAnalisisModal.Solucion = solAcumulada;
+			
 					
-				end
+					else
+						% Este es el caso en que el forzante es impermanente y se pide
+						error('No puedes resolver un forzante impermanente con el método permanente')
 				
-			
+					end % if
+				
+				elseif strcmpi(thisAnalisisModal.RegimenTemporal, 'impermanente')
+					% Si el problema se resuelve utilizando el régimen impermanente
+					% nuevamente existen dos situaciones. La primera sería aquella en que
+					% el forzante es impermanente y tiene especificado un vector de tiempo
+					% define su evolución. La segunda es aquella en el que el forzante es 
+					% constante en el tiempo y no existe un vector de tiempo 
+					% para resolver el problema. En este último caso, se crea
+					% un vector de tiempo arbitrario.
 
-			elseif strcmpi(thisAnalisisModal, 'impermanente')
-				% Si el problema se resuelve utilizando el régimen impermanente
-				% nuevamente existen dos situaciones. La primera sería aquella en que
-				% el forzante es impermanente y tiene especificado un vector de tiempo
-				% que lo define. La segunda es aquella en el que el forzante es 
-				% constante en el tiempo y no existe un vector de tiempo 
-				% para resolver el problema. En este último caso, se crea
-				% un vector de tiempo arbitrario.
+					if(isempty(tiempoForzante))
 
+						% Si el forzante es constante en el tiempo. 
+						% Entonces creo un vector de tiempo arbitrario
 
-			else
-				error('Tipo temporal no definido')
-			end
+						tFinal = 25000; %segundos
+						deltaT = 20; %segundos
+						tiempoCalculo = 0:deltaT:tFinal;
+						nTiempoCalculo = length(tiempoCalculo);
+						forzanteExterno = repmat(forzanteExterno, 1, nTiempoCalculo);
 
+					else
 
+						% Si el forzante varía en el tiempo. 
+						% Entonces tomo los datos de tiempo del forzante
 
+						tiempoCalculo = tiempoForzante;
+						deltaT = abs(tiempoCalculo(1)-tiempoCalculo(2));
+						nTiempoCalculo = length(tiempoCalculo);
 
+					end
 
+					% Variables que almacenan resultados
 
-			
-%%%			matricesResolucion = Cuerpo.Matrices;
-%%%			b = matricesResolucion.f;
-%%%			M = matricesResolucion.M;
-%%			% valoresVectoresPropios = Cuerpo.valoresVectoresPropios;
-%%			
-%%			%vr = valoresVectoresPropios.vectoresPropios.derechos;
-%%			%dr = valoresVectoresPropios.valoresPropios.derechos;
-%%			%vl = valoresVectoresPropios.vectoresPropios.izquierdos;
-%%			%dl = valoresVectoresPropios.valoresPropios.izquierdos;
+					aTildeDerechaMasR = sparse(length(tiempoCalculo), cuantosVectoresR);
+					aTildeDerechaMenosR = aTildeDerechaMasR;
+					aTildeDerechaOmegaCero = sparse(length(tiempoCalculo), cuantosVectoresOmegaCero);
 
-%%			vr = vectoresPropiosDerechos(Cuerpo);
-%%			vl = vectoresPropiosIzquierdos(Cuerpo);
-%%			drp2 = valoresPropiosDerechos(Cuerpo);
-%%			dlp2 = valoresPropiosIzquierdos(Cuerpo);
-%%			
-%%			flag = 1e-8;
-%%			
-%%			% drp2 = diag(dr);
-%%			% dlp2 = diag(dl);
-%%			
-%%			vrp2 = vr;
-%%			vlp2 = vl;
-%%			
-%%			omegadr = quant(real(drp2),flag);
-%%			gammadr = quant(imag(drp2),flag);
-%%			
-%%			drp2 = omegadr + sqrt(-1)*gammadr;
-%%			
-%%			omegadl = quant(real(dlp2),flag);
-%%			gammadl = quant(imag(dlp2),flag);
-%%			
-%%			dlp2 = omegadl + sqrt(-1)*gammadl;
-%%			
-%%			fdiagcero = find(abs(drp2) <= flag);
-%%			fsincero = 1:length(drp2);
-%%			fsincero(fdiagcero) = [];
-%%			
-%%			% keyboard
+					solModosR = sparse(length(vectoresIzquierdaMasR(:,1)), nTiempoCalculo);
+					solModosOmegaCero = solModosR;
+					solAcumulada = solModosR;
+
+					barraEspera = waitbar(0,'Please wait..');
+
+					% Loop para el tiempo
+
+					for iTiempo = 2:nTiempoCalculo
+						waitbar(iTiempo/nTiempoCalculo)
+
+						fTMasRTmUno = dot(vectoresIzquierdaMasR, ...
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*deltaX*deltaY;
+						fTMasRT = dot(vectoresIzquierdaMasR, ... 
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*deltaX*deltaY;
+						fTildeMasRProm = 0.5*(fTMasRTmUno + fTMasRT);
+
+						aTildeDerechaMasR(iTiempo,:) = ((0.5*iOMGeTildeDerMasR + eTildeDerechaMasR/deltaT).*aTildeDerechaMasR(iTiempo-1,:) + fTildeMasRProm)./(eTildeDerechaMasR/deltaT - 0.5*iOMGeTildeDerMasR); 
 
 
+						fTMenosRTmUno = dot(vectoresIzquierdaMenosR, ...
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*deltaX*deltaY;
+						fTMenosRT = dot(vectoresIzquierdaMenosR, ... 
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*deltaX*deltaY;
+						fTildeMenosRProm = 0.5*(fTMenosRTmUno + fTMenosRT);
 
+						aTildeDerechaMenosR(iTiempo,:) = ((0.5*iOMGeTildeDerMenosR + eTildeDerechaMenosR/deltaT).*aTildeDerechaMenosR(iTiempo-1,:) + fTildeMenosRProm)./(eTildeDerechaMenosR/deltaT - 0.5*iOMGeTildeDerMenosR); 
 
-			
-%%			mvr = M*vrp2;
-%%			mvrc = M*conj(vrp2);
-%%			mvl = M*vlp2;
-%%			mvlc = M*conj(vlp2);
-%%			
-%%			% ftilde = sparse(zeros(length(vlp2),1));
-%%			% etilde = ftilde;
-%%			
-%%			% Para + r
-%%				% for i = 1:length(vlp2)
-%%				% 	ftilde(i) = vlp2(:,i)'*b;
-%%				% 	etilde(i) = vlp2(:,i)'*mvr(:,i);
-%%				% end
-%%			
-%%			ftilde = dot(vlp2,repmat(b,1,length(vlp2)));
-%%			ftilde = ftilde.';
-%%			etilde = dot(vlp2,mvr);
-%%			etilde = etilde.';
-%%			
-%%			iomegamenosgamma = sqrt(-1)*omegadr - gammadr;
-%%			atilde = -ftilde(fsincero)./(iomegamenosgamma(fsincero).*etilde(fsincero));
-%%			atilde2 = zeros(length(atilde)+length(fdiagcero),1);
-%%			atilde2(fsincero) = atilde;
-%%			
-%%			
-%%			%ftilderm = ftilde;
-%%			%etilderm = ftilde;
-%%			
-%%			%for i = 1:length(vlp2)
-%%			%	ftilderm(i) = vlp2(:,i).'*b;
-%%			%	etilderm(i) = vlp2(:,i).'*mvrc(:,i);
-%%			%end
-%%			
-%%			%ftilderm = dot(vlp2,repmat(b,1,length(vlp2)));
-%%			%ftilderm = conj(ftilderm);
-%%			%ftilderm = ftilderm.';
-%%			%etilde = dot(vlp2,mvrc);
-%%			%ftilderm = conj(ftilderm);
-%%			%etilde = etilde.';
+						fTOmCeroTmUno = dot(vectoresIzquierdaOmegaCero, ...
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+						fTOmCeroT = dot(vectoresIzquierdaOmegaCero, ... 
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+						fTildeOmCeroProm = 0.5*(fTOmCeroTmUno + fTOmCeroT);
 
+						aTildeDerechaOmegaCero(iTiempo,:) = ((0.5*iOMGeTildeDerOmegaCero + eTildeDerechaOmegaCero/deltaT).*aTildeDerechaOmegaCero(iTiempo-1,:) + fTildeOmCeroProm)./(eTildeDerechaOmegaCero/deltaT - 0.5*iOMGeTildeDerOmegaCero); 
 
-%%			%iomegamenosgammarm = -sqrt(-1)*omegadr - gammadr;
-%%			%atilderm = -ftilderm(fsincero)./(iomegamenosgammarm(fsincero).*etilderm(fsincero));
-%%			%atilde2rm = zeros(length(atilderm)+length(fdiagcero),1);
-%%			%atilde2rm(fsincero) = atilderm;
+						%%%%%%%%%%%%%%%%%%%%%%%%%% SUMO MODOS R %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+						for iModo = 1:cuantosVectoresR
+					
+							solAuxiliar = aTildeDerechaMasR(iTiempo, iModo)*vectoresDerechaMasR(:,iModo) + aTildeDerechaMenosR(iTiempo, iModo)*vectoresDerechaMenosR(:,iModo);
+							solModosR(:,iTiempo) = solModosR(:,iTiempo) + solAuxiliar;
 
-%%			% Sumatoria
-%%			SOLam = zeros(length(vrp2),1);
-%%			Chivsmod = sparse(zeros(length(vrp2),length(atilde2)));
+						end
+						%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%			for i = 1:length(vrp2)
-%%			   	Chivsmod(:,i) = real(atilde2(i)*vrp2(:,i)); % Valores para +r y -r están todos incluidos en atilde2.
-%%			    	SOLam = SOLam + Chivsmod(:,i);
-%%			end
+						%%%%%%%%%%%%%%%%% SUMO MODOS OMEGA = 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+						for iModo = 1:cuantosVectoresOmegaCero
+					
+							solAuxiliar = aTildeDerechaOmegaCero(iTiempo, iModo)*vectoresDerechaOmegaCero(:,iModo);
+							solModosOmegaCero(:,iTiempo) = solModosOmegaCero(:,iTiempo) + solAuxiliar;
+		
+						end
+						%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%			analisisModal = SOLam;
+					end % for iTiempo
 
-%%			%mchi = M*Chivsmod;
-%%			%Etvsmod = sum(Chivsmod.*mchi)/4;
-%%			%Epvsmod = sum(Chivsmod(1:Neta,:).*mchi(1:Neta,:))/4;
-%%			%Ekvsmod = sum(Chivsmod(Neta:end,:).*mchi(Neta:end,:))/4;
-		end
+					close(barraEspera)
+	
+					solAcumulada = solModosR + solModosOmegaCero;
+					thisAnalisisModal.Solucion = solAcumulada;
+					thisAnalisisModal.Tiempo = tiempoCalculo;
 
-			
-		function thisAnalisisModal = ordenaModos(thisAnalisisModal)
-			
-			problemaDerecha = thisAnalisisModal.VyVPropios.ProblemaDerecha;
-			problemaIzquierda = thisAnalisisModal.VyVPropios.ProblemaIzquierda;
-			
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-			% Esta parametro permite cortar el valor de los valores propios
-			% calculados. En el fondo, es una tolerancia, puesto que producto
-			% del calculo numerico y de la precision del programa, a partir
-			% de la posicion 1e-10 (mas o menos), los valores propios
-			% que deberían ser iguales, pueden ser distintos. Esta diferencia
-			% no tiene influencia en el fenomeno, por lo tanto, la descarto.
-			precisionCalculo = 1e-8;
-			
-			omegaDerecha = quant(real(problemaDerecha.valores), precisionCalculo);
-			gammaDerecha = quant(imag(problemaDerecha.valores), precisionCalculo);
-			omegaIzquierda = quant(real(problemaIzquierda.valores), precisionCalculo);
-			gammaIzquierda = quant(imag(problemaIzquierda.valores), precisionCalculo);
-			valoresDerechos = omegaDerecha + i*gammaDerecha;
-			valoresIzquierdos = omegaIzquierda + i*gammaIzquierda;
-
-			vectoresDerechos = problemaDerecha.vectores;
-			vectoresIzquierdos = problemaIzquierda.vectores;
-
-			% keyboard
-
-			% Ya adecué los datos, ahora debo eliminar del calculo, el/los 	
-			% modo que tiene modulo del valor propio igual a cero	
-			% Para conocer el efecto que tienen en la solucion,	
-			% me gustaría aislar todos los modos que tienen omega = 0
-			% y caso aparte es el modo que tiene omega y gamma = 0
-			
-
-			% Busca modo con valor propio == 0
-			cualEsCeroDerecho = find(abs(valoresDerechos) == 0);
-			cualEsCeroIzquierdo = find(abs(valoresIzquierdos) == 0);
-			valorDerechoNulo = valoresDerechos(cualEsCeroDerecho);
-			valorIzquierdoNulo = valoresIzquierdos(cualEsCeroIzquierdo);
-			valoresDerechos(cualEsCeroDerecho) = [];
-			valoresIzquierdos(cualEsCeroIzquierdo) = [];
-
-
-			% keyboard
-			% Almaceno el vector propio que tiene valor propio nulo			
-			vectorVPNuloDerecho = vectoresDerechos(:,cualEsCeroDerecho);
-			vectorVPNuloIzquierdo = vectoresDerechos(:,cualEsCeroIzquierdo);
-
-			% Elimino el/los modos con valor propio nulo
-			vectoresDerechos(:,cualEsCeroDerecho) = [];				
-			vectoresIzquierdos(:,cualEsCeroIzquierdo) = [];
-
-			% Busco modos con omega == 0
-			omegaEsCeroDerecho = find(real(valoresDerechos) == 0);
-			omegaEsCeroIzquierdo = find(real(valoresIzquierdos) == 0);
-			
-			% Guardo y elimino del vector de valores propios, aquellos con omega == 0
-			valoresOmegaCeroDerecho = valoresDerechos(omegaEsCeroDerecho);
-			valoresOmegaCeroIzquierdo = valoresIzquierdos(omegaEsCeroIzquierdo);
-			valoresDerechos(omegaEsCeroDerecho) = [];
-			valoresIzquierdos(omegaEsCeroIzquierdo) = [];
-
-			% Guardo y elimino del vector de vectores propios, aquellos con omega == 0
-			vectoresOmegaCeroDerecho = vectoresDerechos(:,omegaEsCeroDerecho);
-			vectoresOmegaCeroIzquierdo = vectoresIzquierdos(:,omegaEsCeroIzquierdo);
-			vectoresDerechos(:,omegaEsCeroDerecho) = [];
-			vectoresIzquierdos(:,omegaEsCeroIzquierdo) = [];
-
-			[valoresOmegaCeroDerecho IndiceDerechoNulo] = sort(valoresOmegaCeroDerecho, 'ascend');  
-			vectoresOmegaCeroDerecho = vectoresOmegaCeroDerecho(:,IndiceDerechoNulo);
-
-			[valoresOmegaCeroIzquierdo IndiceIzquierdoNulo] = sort(valoresOmegaCeroIzquierdo, 'ascend');  
-			vectoresOmegaCeroIzquierdo = vectoresOmegaCeroIzquierdo(:,IndiceIzquierdoNulo);
-
-			% Hasta aquí tengo correctamente separados, los vectores
-			% y valores propios con abs(omega + igamma) == 0 y 
-			% aquellos con gamma = 0
-
-			% Ahora, me gustaría ordenar los modos según el signo de la
-			% frecuencia de oscilacion omega, es decir, identificar
-			% claramente, cuales son los vectores propios que pertenecen
-			% a +r y los que pertenecen a -r (ver Shimizu e Imberger 2008)
-			% Esto tiene que ser realizado tanto para el problema 
-			% por la izquierda como para el problema por la derecha
-
-			cualOmegaPositivoDerecho = find(real(valoresDerechos) > 0); 
-			cualOmegaPositivoIzquierdo = find(real(valoresIzquierdos) > 0);
-			cualOmegaNegativoDerecho = find(real(valoresDerechos) < 0); 
-			cualOmegaNegativoIzquierdo = find(real(valoresIzquierdos) < 0); 
-
-			valoresDerechosMasR = valoresDerechos(cualOmegaPositivoDerecho);
-			valoresDerechosMenosR = valoresDerechos(cualOmegaNegativoDerecho);
-			valoresIzquierdosMasR = valoresIzquierdos(cualOmegaPositivoIzquierdo);
-			valoresIzquierdosMenosR = valoresIzquierdos(cualOmegaNegativoIzquierdo);
-			
-			vectoresDerechosMasR = vectoresDerechos(:,cualOmegaPositivoDerecho);
-			vectoresDerechosMenosR = vectoresDerechos(:,cualOmegaNegativoDerecho);
-			vectoresIzquierdosMasR = vectoresIzquierdos(:,cualOmegaPositivoIzquierdo);
-			vectoresIzquierdosMenosR = vectoresIzquierdos(:,cualOmegaNegativoIzquierdo);
-
-			% Ahora ordeno los omegas positivos de menor a mayor
-			% y aplico el mismo orden para los vectores, tanto para la derecha
-			% como para la izquierda
-
-			[valoresDerechosMasR IndiceDerechoMasR] = sort(valoresDerechosMasR, 'ascend');  
-			vectoresDerechosMasR = vectoresDerechosMasR(:,IndiceDerechoMasR);
-			[valoresDerechosMenosR IndiceDerechoMenosR] = sort(valoresDerechosMenosR, 'ascend');  
-			vectoresDerechosMenosR = vectoresDerechosMenosR(:,IndiceDerechoMenosR);
-
-			[valoresIzquierdosMasR IndiceIzquierdoMasR] = sort(valoresIzquierdosMasR, 'ascend');  
-			vectoresIzquierdosMasR = vectoresIzquierdosMasR(:,IndiceIzquierdoMasR);
-			[valoresIzquierdosMenosR IndiceIzquierdoMenosR] = sort(valoresIzquierdosMenosR, 'ascend');  
-			vectoresIzquierdosMenosR = vectoresIzquierdosMenosR(:,IndiceIzquierdoMenosR);
-			keyboard %REVISAR QUE PASARIA EN EL CASO DE FRICCION CERO PARECE QUE CAGA
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-			masRDerecha.valores = valoresDerechosMasR;
-			masRDerecha.vectores = vectoresDerechosMasR;
-			menosRDerecha.valores = valoresDerechosMenosR;
-			menosRDerecha.vectores = vectoresDerechosMenosR;
-			omegaNuloDerecha.valores = valoresOmegaCeroDerecho;
-			omegaNuloDerecha.vectores = vectoresOmegaCeroDerecho;
-			vPropioNuloDerecha.valores = valorDerechoNulo;
-			vPropioNuloDerecha.vectores = vectorVPNuloDerecho;
-			masRIzquierda.valores = valoresIzquierdosMasR;
-			masRIzquierda.vectores = vectoresIzquierdosMasR;
-			menosRIzquierda.valores = valoresIzquierdosMenosR;
-			menosRIzquierda.vectores = vectoresIzquierdosMenosR;
-			omegaNuloIzquierda.valores = valoresOmegaCeroIzquierdo;
-			omegaNuloIzquierda.vectores = vectoresOmegaCeroIzquierdo;
-			vPropioNuloIzquierda.valores = valorIzquierdoNulo;
-			vPropioNuloIzquierda.vectores = vectorVPNuloIzquierdo;
-			ProblemaDerecha.MasR = masRDerecha;
-			ProblemaDerecha.MenosR = menosRDerecha;
-			ProblemaDerecha.OmegaNulo = omegaNuloDerecha;
-			ProblemaDerecha.vPropioNulo = vPropioNuloDerecha;
-			ProblemaIzquierda.MasR = masRIzquierda;
-			ProblemaIzquierda.MenosR = menosRIzquierda;
-			ProblemaIzquierda.OmegaNulo = omegaNuloIzquierda;
-			ProblemaIzquierda.vPropioNulo = vPropioNuloIzquierda;
-
-			vyVPropios.ProblemaDerecha = ProblemaDerecha;
-			vyVPropios.ProblemaIzquierda = ProblemaIzquierda;
-
-			thisAnalisisModal.VyVPropios = vyVPropios;
-		end %function ordenaModos
+				else
+					error('Régimen temporal no definido')
+				end %if
+		end %function amplitudModal
 	end %methods
 end % classdef
+
+%%%%%%%%%%%%%%%%%%%%%%% THRASH
+
+%%						for iTiempo = 1:nTiempoCalculo
+%%							graficaModo(simulacion, solAcumulada(:,iTiempo))
+%%							pause(0.01)
+%%						end
+
+%%						keyboard
+
+

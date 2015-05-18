@@ -23,24 +23,62 @@ classdef Cuerpo < hgsetget
     
 	methods
 
-	        function thisCuerpo = Cuerpo(varargin)
+	        function thisCuerpo = Cuerpo(thisCuerpo, varargin)
 
-			thisCuerpo.Parametros = Parametros();			
-			thisCuerpo.Fluido = Fluido('Agua', thisCuerpo.Parametros.densidadRho, thisCuerpo.Parametros.viscosidadNu);
+			if nargin == 0
 
-			for iVariable = 1:nargin
-				switch class(varargin{iVariable})
-					case 'Geometria' 
-						thisCuerpo.Geometria = varargin{iVariable};
-					case 'Parametros'
-						thisCuerpo.Parametros = varargin{iVariable};
-					case 'Fluido'
-						thisCuerpo.Fluido = varargin{iVariable};
-					otherwise 
-						error(['Clase cuerpo no trabaja con ', class(varargin{iVariable})])
-				end %switch 
-			end %for
-        	end % function Cuerpo
+				thisCuerpo;
+	
+			else
+
+				thisCuerpo.Parametros = Parametros();			
+				thisCuerpo.Fluido = Fluido('Agua', thisCuerpo.Parametros.densidadRho, thisCuerpo.Parametros.viscosidadNu);
+
+				for iVariable = 1:length(varargin)
+					switch class(varargin{iVariable})
+						case 'Geometria' 
+							thisCuerpo.Geometria = varargin{iVariable};
+						case 'Parametros'
+							thisCuerpo.Parametros = varargin{iVariable};
+						case 'Fluido'
+							thisCuerpo.Fluido = varargin{iVariable};
+						otherwise 
+							error(['Clase cuerpo no trabaja con ', class(varargin{iVariable})])
+					end %switch 
+				end %for
+			end %if
+	       	end % function Cuerpo
+
+		function malla = getMalla(cuerpo)
+				
+			malla = cuerpo.Geometria.Malla;			
+					
+		end %function getMalla
+
+		function batimetria = getBatimetria(cuerpo)
+				
+			batimetria = cuerpo.Geometria.Batimetria;			
+					
+		end %function getBatimetria
+
+		function parametros = getParametros(cuerpo)
+				
+			parametros = cuerpo.Parametros;			
+					
+		end %function getParametros
+
+		function fluido = getFluido(cuerpo)
+				
+			fluido = cuerpo.Fluido;			
+					
+		end %function getFluido
+
+		function geometria = getGeometria(cuerpo)
+				
+			geometria = cuerpo.Geometria;			
+					
+		end %function getGeometria
+
     end % methods
 end % classdef
 

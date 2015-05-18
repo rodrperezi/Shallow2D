@@ -1,6 +1,7 @@
 	function [numeroNodosEta varargout] = getNumeroNodos(varargin)
 		if nargin == 1
-			malla = getMalla(varargin{:});
+			objeto = varargin{1};
+			malla = getMalla(objeto);
 			numeroNodosEta = malla.numeroNodosEta;
 			numeroNodosU = malla.numeroNodosU;
 			numeroNodosV = malla.numeroNodosV;

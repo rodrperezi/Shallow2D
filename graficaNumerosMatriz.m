@@ -4,7 +4,8 @@ function graficaNumetrosMatriz(matriz)
 % que contiene matriz, en el mismo formato que
 % la matriz se muestra en el prompt de Matlab
 	
-	close all
+	% close all
+	figure
 	[filas columnas] = size(matriz);
 	for iFilas = 1:filas
 		for iColumnas = 1:columnas

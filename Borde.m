@@ -43,6 +43,11 @@ classdef Borde < hgsetget
 			thisBorde.tipoBorde = 'Rectangular';
 			thisBorde.coordenadasXY = bordeRectangular;
 		end %function generaBordeRectangular
+
+%		function bordeDatos()
+
+%		end
+
 	end %methods
 end %classdef
 

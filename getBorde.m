@@ -1,16 +1,18 @@
 	function thisBorde = getBorde(varargin)	
+
 		if nargin == 1
-			switch class(varargin{:})
+			objeto = varargin{1};
+			switch class(objeto)
 				case 'Simulacion'				
-					thisBorde = varargin{:}.Cuerpo.Geometria.Borde;					
+					thisBorde = objeto.Cuerpo.Geometria.Borde;					
 				case 'Cuerpo'
-					thisBorde = varargin{:}.Geometria.Borde;
+					thisBorde = objeto.Geometria.Borde;
 				case 'Geometria'
-					thisBorde = varargin{:}.Borde;
+					thisBorde = objeto.Borde;
 				case 'Borde'
-					thisBorde = varargin{:};
+					thisBorde = objeto;
 				otherwise 
-					error(['El objeto ', class(varargin{:}), ' no contiene un Borde'])
+					error(['El objeto ', class(objeto), ' no contiene un Borde'])
 			end %switch	
 		end %if
 	end %getBorde

@@ -1,7 +1,8 @@
 	function [solucionEta varargout] = getEtaUV(varargin, solucionCompleta)
-		if length(varargin) == 1
-			malla = getMalla(varargin);
-			[numeroNodosEta numeroNodosU numeroNodosV]= getNumeroNodos(varargin);
+		if nargin == 2
+			objeto = varargin;
+			malla = getMalla(objeto);
+			[numeroNodosEta numeroNodosU numeroNodosV]= getNumeroNodos(objeto);
 			
 			SOL = solucionCompleta;
 			Neta = numeroNodosEta;
@@ -15,7 +16,7 @@
 			nBSu = malla.numeroBordesSuperior;
 			nBIn = malla.numeroBordesInferior;
 			
-			eta = SOL(1:Neta,end);
+			eta = SOL(1:Neta);
 			
 			uaux = sparse(zeros(Nu,1));
 			vaux = sparse(zeros(Nv,1));

@@ -20,6 +20,9 @@ classdef Malla < hgsetget
 		numeroBordesDerecho
 		numeroBordesSuperior
 		numeroBordesInferior
+		matrizIndicesEta
+		coordenadasEta2DX
+		coordenadasEta2DY
 
 
 	end
@@ -283,7 +286,11 @@ classdef Malla < hgsetget
 			% Posiciones (numero) x e y de nodos \eta en la matriz geo
 			% 
 			[xNumeroNodosEta yNumeroNodosEta] = find(geo' == 1); 
-			geoEnume = sparse(zeros(size(geo')));
+			[mFilas nCol] = size(geo');
+			geoEnume = sparse(mFilas, nCol);
+			coordenadasEta2DX = NaN(mFilas, nCol);
+			coordenadasEta2DY = coordenadasEta2DX;
+			% puntosDentro = geoEnume';
 			% 		
 			% Enumero nodos \eta. El extremo superior izquierdo es el primero
 			% y el extremo inferior derecho es el último. Nodos eta crecen de izquierda a derecha. 
@@ -292,9 +299,13 @@ classdef Malla < hgsetget
 			% la notación de enumeración
 			% 
 			for iEnum = 1:numeroNodosEta 
-				geoEnume(xNumeroNodosEta(iEnum),yNumeroNodosEta(iEnum)) = iEnum;    
+				geoEnume(xNumeroNodosEta(iEnum),yNumeroNodosEta(iEnum)) = iEnum;
+				coordenadasEta2DX(xNumeroNodosEta(iEnum),yNumeroNodosEta(iEnum)) = coordenadasEta(iEnum,1);
+				coordenadasEta2DY(xNumeroNodosEta(iEnum),yNumeroNodosEta(iEnum)) = coordenadasEta(iEnum,2);
 			end
 			geoEnume = geoEnume';
+			coordenadasEta2DX = coordenadasEta2DX';
+			coordenadasEta2DY = coordenadasEta2DY';
 			% graficaNumerosMatriz(geoEnume)
 			% keyboard
 			% >> full(geoEnume)
@@ -331,7 +342,7 @@ classdef Malla < hgsetget
 			% de los índices, es para acomodar el dato obtenido 
 			% de las matrices geoSupInf y geoIzqDer con la matriz geoEnum, 
 			% que tiene una dimensión más producto de que no ha sido sometida 
-			% a la función diff()
+			% a la función diff().
 			% 
 			for iBorde = 1:length(numeroBordesIzquierdo) 
 				numeroBordesIzquierdo(iBorde) = geoEnume(bordeIzquierdoY(iBorde), bordeIzquierdoX(iBorde)+1);
@@ -346,7 +357,7 @@ classdef Malla < hgsetget
 		
 			for iBorde = 1:length(numeroBordesDerecho) 
 				numeroBordesDerecho(iBorde) = geoEnume(bordeDerechoY(iBorde),bordeDerechoX(iBorde));
-			end % La posición de los bordes inferiores, es la misma en geoEnume que en geoSupInf
+			end % La posición de los bordes derechos, es la misma en geoEnume que en geoIzqDer
 			numeroBordesDerecho = sort(numeroBordesDerecho);
 		
 			for iBorde = 1:length(numeroBordesSuperior) 
@@ -521,6 +532,9 @@ classdef Malla < hgsetget
 				coordenadasV(ID(iID,4)-nResV,1) = coordenadasEta(iID,1); %coordenadaX de nodo s
 				coordenadasV(ID(iID,4)-nResV,2) = coordenadasEta(iID,2) - 0.5*deltaY; %coordenadaY de nodo s
 			end
+	
+			% graficaNumerosMatriz(geoEnume)
+			% keyboard
 
 			IDwe = ID(:,1:2) - numeroNodosEta;
 			IDns = ID(:,3:4) - numeroNodosEta - numeroNodosU;
@@ -539,8 +553,11 @@ classdef Malla < hgsetget
 			thisMalla.numeroBordesDerecho = numeroBordesDerecho;
 			thisMalla.numeroBordesSuperior = numeroBordesSuperior;
 			thisMalla.numeroBordesInferior = numeroBordesInferior;
+			thisMalla.matrizIndicesEta = matrizIndicesEta;
+			thisMalla.coordenadasEta2DX = coordenadasEta2DX;
+			thisMalla.coordenadasEta2DY = coordenadasEta2DY;
 
-		end % function generaMallaStaggered
+		end % function construyeMallaStaggered
 	end %methods
 end % classdef
 

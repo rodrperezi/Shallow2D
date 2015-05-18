@@ -9,11 +9,17 @@ function thisMatrices = generaMatrices(thisMatrices, simulacion)
 % Tengo que pensar la construcción de las matrices para el caso de n capas.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-	cuerpo = simulacion.Cuerpo;
-	forzantes = simulacion.Forzantes; 
-	malla = cuerpo.Geometria.Malla;
-	batimetria = cuerpo.Geometria.Batimetria;
-	parametros = cuerpo.Parametros;
+%	cuerpo = simulacion.Cuerpo;
+%	forzantes = simulacion.Forzantes; 
+%	malla = cuerpo.Geometria.Malla;
+%	batimetria = cuerpo.Geometria.Batimetria;
+%	parametros = cuerpo.Parametros;
+
+	cuerpo = getCuerpo(simulacion);
+	forzantes = getForzantes(simulacion);
+	malla = getMalla(cuerpo);
+	batimetria = getBatimetria(cuerpo);
+	parametros = getParametros(cuerpo);
 
 	Neta = malla.numeroNodosEta;
 	Nns = malla.numeroNodosV;
@@ -30,6 +36,8 @@ function thisMatrices = generaMatrices(thisMatrices, simulacion)
 	hoeta =  batimetria.hoNodosEta;
 	howe =  batimetria.hoNodosU;
 	hons =  batimetria.hoNodosV;
+	% hprom = mean(hoeta;howe;hons);
+	hprom = 0.971*cuerpo.Geometria.parametrosGeometria.Altura;	
 
 	kap = parametros.kappaVonKarman;
 	zo = parametros.zoAsperezaAgua;
@@ -246,7 +254,7 @@ function thisMatrices = generaMatrices(thisMatrices, simulacion)
 	end
 
 %keyboard
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Borro las filas del vector de forzantes que corresponden 
 % a los nodos que son bordes
@@ -255,12 +263,25 @@ borrarBordes = [ID(nBIz,1);ID(nBDe,2);ID(nBSu,3);ID(nBIn,4)];
 forzanteExterno(borrarBordes, :) = [];
 compiladoBatimetria(borrarBordes) = [];
 
+% Calculo del coeficiente de friccion. 
+% El tipo calculo del coeficiente de friccion 
+% depende del tipo de forzante. 
+% Los tipos de forzante disponibles son: 
+% 
+% - vientoUniforme
+% - aceleracionHorizontalOscilatoria
+% - aceleracionHorizontal
+% - serieAceleracion (critica)
+
 % Friccion POR AHORA PONGO CUALQUIER COSA COMO FRICCION	
 % uvTildeFriccion = sqrt(20)*uAsterisco; %Perez y de la Fuente 2014
 uAsterisco = listaForzantes.N1.Parametros.uAsterisco;
-uvTildeFriccion = 0*sqrt(20)*uAsterisco; %Perez y de la Fuente 2014
+uvTildeFriccion = sqrt(20)*uAsterisco; %Perez y de la Fuente 2014
 factorFriccion = parametros.factorFriccion; 
 coefFriccionLineal = inline('sqrt(2)*factorFriccion*uvTildeFriccion*ones(length(donde),1)','factorFriccion', 'uvTildeFriccion','donde');
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	fila = (1:Neta)';

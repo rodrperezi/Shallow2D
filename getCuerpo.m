@@ -1,12 +1,13 @@
 	function thisCuerpo = getCuerpo(varargin)	
 		if nargin == 1
-			switch class(varargin{:})
+			objeto = varargin{1};
+			switch class(objeto)
 				case 'Simulacion'				
-					thisCuerpo = varargin{:}.Cuerpo;					
+					thisCuerpo = objeto.Cuerpo;					
 				case 'Cuerpo'
-					thisCuerpo = varargin{:};
+					thisCuerpo = objeto;
 				otherwise 
-					error(['El objeto ', class(varargin{:}), ' no contiene un Cuerpo'])
+					error(['El objeto ', class(objeto), ' no contiene un Cuerpo'])
 			end %switch	
 		end %if
 	end %getCuerpo

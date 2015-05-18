@@ -1,14 +1,15 @@
 	function thisGeometria = getGeometria(varargin)	
 		if nargin == 1
-			switch class(varargin{:})
+			objeto = varargin{1};
+			switch class(objeto)
 				case 'Simulacion'				
-					thisGeometria = varargin{:}.Cuerpo.Geometria;					
+					thisGeometria = objeto.Cuerpo.Geometria;					
 				case 'Cuerpo'
-					thisGeometria = varargin{:}.Geometria;
+					thisGeometria = objeto.Geometria;
 				case 'Geometria'
-					thisGeometria = varargin{:};
+					thisGeometria = objeto;
 				otherwise 
-					error(['El objeto ', class(varargin{:}), ' no contiene una Geometria'])
+					error(['El objeto ', class(objeto), ' no contiene una Geometria'])
 			end %switch	
 		end %if
 	end %getGeometria
