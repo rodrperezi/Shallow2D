@@ -3,7 +3,7 @@ classdef Cuerpo < hgsetget
 	% CUERPO se entiende como un cuerpo de fluido
 	% Los objetos creados con la clase cuerpo tienen
 	% como propiedades objetos de las clases GEOMETRIA, FLUIDO, 
-	% FORZANTE, PARAMETROS.
+	% PARAMETROS.
 	% Los componentes anteriores contienen la información necesaria
 	% y detallada de las variables hidrodinámicas y numéricas.
 	% Batimetría, malla numérica son algunos ejemplos.
@@ -28,11 +28,10 @@ classdef Cuerpo < hgsetget
 			if nargin == 0
 
 				thisCuerpo;
-	
-			else
-
 				thisCuerpo.Parametros = Parametros();			
 				thisCuerpo.Fluido = Fluido('Agua', thisCuerpo.Parametros.densidadRho, thisCuerpo.Parametros.viscosidadNu);
+
+			else
 
 				for iVariable = 1:length(varargin)
 					switch class(varargin{iVariable})
@@ -48,6 +47,13 @@ classdef Cuerpo < hgsetget
 				end %for
 			end %if
 	       	end % function Cuerpo
+
+		function thisCuerpo = addGeometria(thisCuerpo, geometria)
+				
+			thisCuerpo.Geometria = geometria;			
+					
+		end %function getMalla
+
 
 		function malla = getMalla(cuerpo)
 				

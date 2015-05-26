@@ -7,7 +7,6 @@ classdef Simulacion < hgsetget
 	properties
 
 		Cuerpo
-		% Forzantes
 		ListaForzantes
 		Matrices
 		AnalisisModal
@@ -155,6 +154,12 @@ classdef Simulacion < hgsetget
 					
 		end %function getCuerpo
 
+		function borde = getBorde(simulacion)
+				
+			borde = simulacion.Cuerpo.Geometria.Borde;			
+					
+		end %function getBorde
+
 		function listaForzantes = getListaForzantes(simulacion)
 				
 			listaForzantes = simulacion.ListaForzantes;			
@@ -185,6 +190,13 @@ classdef Simulacion < hgsetget
 					
 		end %function getFluido
 
+		function [deltaX deltaY] = getDeltaX(simulacion)
+				
+			deltaX = simulacion.Cuerpo.Geometria.Malla.deltaX;			
+			deltaY = simulacion.Cuerpo.Geometria.Malla.deltaY;			
+					
+		end %function getDeltaX
+
 		function compiladoBatimetria = getCompiladoBatimetria(simulacion)
 
 			batimetria = getBatimetria(simulacion);
@@ -194,7 +206,6 @@ classdef Simulacion < hgsetget
 			compiladoBatimetria = [hoeta;howe;hons];
 					
 		end %function getCompiladoBatimetria
-
 
 		
 

@@ -32,17 +32,6 @@ classdef Grafico < hgsetget
 
 		end %function graficaBorde
 
-
-
-
-
-
-
-%		function simulacion = asignaMatrices(thisMatrices, simulacion)
-%					
-%			simulacion.Matrices = generaMatrices(thisMatrices, simulacion);
-
-%		end %function 
-		
+	
 	end %methods
 end % classdef

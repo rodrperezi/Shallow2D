@@ -25,6 +25,7 @@ function graficaEta(varargin, solucion)
 		shading('interp')
 		hold off
 		colorbar
+		
 
 	end %if
 

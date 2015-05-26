@@ -23,7 +23,9 @@ classdef AnalisisModal < Motor
 			thisAnalisisModal.Tipo = 'AnalisisModal';
 			thisAnalisisModal.RegimenTemporal = regimenTemporal;
 			thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
-			thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
+			if(~strcmpi(regimenTemporal, 'modoslibres'))
+				thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
+			end
 			% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
 			% thisAnalisisModal.Solucion2D = Solucion2D;
 
@@ -38,13 +40,12 @@ classdef AnalisisModal < Motor
 				[M, K, C] = getMatrices(simulacion);
 			
 			% Resuelvo problema por la derecha. 
-		 	
-				[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
-				valoresDerecha = diag(valoresDerecha);
-
+			[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
+			valoresDerecha = diag(valoresDerecha);
+			% keyboard
 			% Corto decimales que sean menores que la precision del programa
 
-				corta = 1e-16;
+				corta = 1e-15;
 				vectoresDerecha = quant(real(vectoresDerecha), corta) + i*quant(imag(vectoresDerecha), corta);
 				valoresDerecha = quant(real(valoresDerecha), corta) + i*quant(imag(valoresDerecha), corta);
 			
@@ -61,8 +62,8 @@ classdef AnalisisModal < Motor
 			% Busco y borro valores propios nulos
 
 				fNuloDer = find(abs(valoresDerecha) < eps);
-				% valoresDerechaNulo = valoresDerecha(fNuloDer);
-				% vectoresDerechaNulo = vectoresDerecha(:,fNuloDer);
+				valoresDerechaNulo = valoresDerecha(fNuloDer);
+				vectoresDerechaNulo = vectoresDerecha(:,fNuloDer);
 				valoresDerecha(fNuloDer) =  [];
 				vectoresDerecha(:,fNuloDer) =  [];
 
@@ -75,7 +76,7 @@ classdef AnalisisModal < Motor
 				vectoresDerechaMasR = vectoresDerechaMasR(:,indDerPos);
 
 			% Busco vectores con omega cero.
-
+				% keyboard
 				fDerechaOmegaCero = find(real(valoresDerecha) == 0);
 				valoresDerechaOmegaCero = valoresDerecha(fDerechaOmegaCero);
 				vectoresDerechaOmegaCero = vectoresDerecha(:,fDerechaOmegaCero);
@@ -119,8 +120,8 @@ classdef AnalisisModal < Motor
 			% matrices
 			
 				geometria = simulacion.Cuerpo.Geometria;
-				deltaX = geometria.deltaX;
-				deltaY = geometria.deltaY;
+				deltaX = geometria.Malla.deltaX;
+				deltaY = geometria.Malla.deltaY;
 				[M, K, C] = getMatrices(simulacion);
 				forzanteExterno = simulacion.Matrices.f;
 				tiempoForzante = simulacion.Matrices.Tiempo;
@@ -322,6 +323,17 @@ classdef AnalisisModal < Motor
 end % classdef
 
 %%%%%%%%%%%%%%%%%%%%%%% THRASH
+		 	
+%%				if(strcmpi(thisAnalisisModal.RegimenTemporal, 'modoslibres'))
+%%					[vectoresDerecha, valoresDerecha]= eigs(full(K), full(M), length(K));
+%%				else					
+
+%%					[vectoresDerecha2, valoresDerecha2]= eig(full([K + C]), full(M));
+%%					[vectoresDerecha3, valoresDerecha3]= eigs(full(K), full(M));
+%%				end
+
+
+
 
 %%						for iTiempo = 1:nTiempoCalculo
 %%							graficaModo(simulacion, solAcumulada(:,iTiempo))

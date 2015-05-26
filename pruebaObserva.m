@@ -14,8 +14,9 @@ centroMasa = [0, 0];
 
 % CONSTRUCCION MODELO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-geoPrueba = construyeKranenburg(Geometria(), R, H, centroMasa);
-cuerpoPrueba = Cuerpo(Cuerpo(), geoPrueba);
+kranPrueba = GeoKranenburg(GeoKranenburg(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa);
+% keyboard
+cuerpoPrueba = addGeometria(Cuerpo(), kranPrueba);
 simulacionPrueba = Simulacion(Simulacion(), cuerpoPrueba);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

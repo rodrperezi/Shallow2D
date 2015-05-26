@@ -1,26 +1,35 @@
-function graficaModo(simulacion, estructura)
+function graficaModo(simulacion, estructura, omega)
 
-	graficaEta(simulacion, estructura)
-	malla = getMalla(simulacion);
-	x = malla.coordenadasEta2DX;
-	y = malla.coordenadasEta2DY;
-	[eta, u, v] = solucion2D(simulacion, estructura);
-	hold on	
-	hq1 = quiver(x,y,u,v, 'color', 0*[1 1 1]);
-	hold off
+	periodo = 2*pi/omega;
+	tiempo = 0:4*periodo/100:4*periodo;
+	val = getEtaUV(simulacion, estructura);
+	cLimit = abs(max(val));
+	% keyboard
+	for iT = 1:length(tiempo)
 
-	% minX = 1.1*sign(min(min(x)))*abs(min(min(x)));	
-	% maxX = 1.1*sign(max(max(x)))*abs(max(max(x)));
-	
-	minX = 1.1*min(min(x));	
-	maxX = 1.1*max(max(x));
-	%  keyboard
-	minY = 1.1*min(min(y));	
-	maxY = 1.1*max(max(y));
+		graficaEta(simulacion, estructura*exp(i*omega*tiempo(iT)))
+		malla = getMalla(simulacion);
+		x = malla.coordenadasEta2DX;
+		y = malla.coordenadasEta2DY;
+		[eta, u, v] = solucion2D(simulacion, estructura*exp(i*omega*tiempo(iT)));
+		hold on	
+		hq1 = quiver(x,y,u,v, 'color', 0*[1 1 1]);
+		hold off
+		caxis([-cLimit cLimit])
 
-	xlim([minX, maxX])
-	ylim([minY, maxY])
-	axis equal
+		minX = 1.1*min(min(x));	
+		maxX = 1.1*max(max(x));
+		%  keyboard
+		minY = 1.1*min(min(y));	
+		maxY = 1.1*max(max(y));
+
+		xlim([minX, maxX])
+		ylim([minY, maxY])
+		axis equal
+		pause(0.01)	
+
+	end
+
 
 end
 

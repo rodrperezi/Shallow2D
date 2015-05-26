@@ -15,12 +15,13 @@ classdef Matrices < hgsetget
 		C
 		f
 		Tiempo
+		Tipo
 		
 	end
 
 	methods
 
-		function thisMatrices = Matrices(simulacion)
+		function thisMatrices = Matrices(simulacion, varargin)
 
 			% La construccion de las matrices K y M no requiere especificar 
 			% el forzante. Por otro lado, la matriz C si requiere conocer
@@ -28,9 +29,22 @@ classdef Matrices < hgsetget
 			% depende de esto.
 					
 			thisMatrices;
-			thisMatrices = matricesMK(thisMatrices, simulacion);
-			thisMatrices = vectorForzante(thisMatrices, simulacion);
-			thisMatrices = matrizC(thisMatrices, simulacion);
+
+			if(isempty(varargin))
+				thisMatrices.Tipo = 'Dimensional';
+				thisMatrices = matricesMK(thisMatrices, simulacion);
+				thisMatrices = vectorForzante(thisMatrices, simulacion);
+				thisMatrices = matrizC(thisMatrices, simulacion);
+			elseif(strcmpi(varargin, 'modoslibres'))	
+				thisMatrices.Tipo = 'ModosLibres';
+				thisMatrices = matricesMK(thisMatrices, simulacion);
+				thisMatrices.C = sparse(zeros(size(thisMatrices.K)));			
+			elseif(strcmpi(varargin, 'adimensional'))	
+				thisMatrices.Tipo = 'Adimensional';
+				thisMatrices = matricesMK(thisMatrices, simulacion);
+				thisMatrices = vectorForzante(thisMatrices, simulacion);
+				thisMatrices = matrizC(thisMatrices, simulacion);
+			end
 
 		end %function Matrices
 
@@ -57,15 +71,15 @@ classdef Matrices < hgsetget
 			hoeta =  batimetria.hoNodosEta;
 			howe =  batimetria.hoNodosU;
 			hons =  batimetria.hoNodosV;
-			hprom = 0.971*cuerpo.Geometria.parametrosGeometria.Altura;	
+			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg
 
 			kap = parametros.kappaVonKarman;
 			zo = parametros.zoAsperezaAgua;
 			g = parametros.aceleracionGravedad;
 
 			rho = cuerpo.Fluido.densidadRho;
-			dx = cuerpo.Geometria.deltaX;
-			dy = cuerpo.Geometria.deltaY;
+			dx = malla.deltaX;
+			dy = malla.deltaY;
 	
 			fila = (1:Neta)';
 	
@@ -132,6 +146,7 @@ classdef Matrices < hgsetget
 			M22(:,[IDwe(nBIz,1);IDwe(nBDe,2)]) = [];
 			M32(:,[IDwe(nBIz,1);IDwe(nBDe,2)]) = [];
 
+
 			K13(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			K23(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			K33(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
@@ -144,6 +159,12 @@ classdef Matrices < hgsetget
 
 			K = i*rho*[K11,K12,K13;K21,K22,K23;K31,K32,K33];  
 			M = rho*[M11,M12,M13;M21,M22,M23;M31,M32,M33];
+
+			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+				K = K*longCar/(rho*g*hprom);
+				M = 0.5*[M11/g,M12,M13;M21,M22/hprom,M23;M31,M32,M33/hprom];
+			end
 
 			thisMatrices.M = M;
 			thisMatrices.K = K;
@@ -179,6 +200,10 @@ classdef Matrices < hgsetget
 			nBDe = malla.numeroBordesDerecho;
 			nBSu = malla.numeroBordesSuperior;
 			nBIn = malla.numeroBordesInferior;
+			parametros = getParametros(cuerpo);
+			g = parametros.aceleracionGravedad;
+			rho = cuerpo.Fluido.densidadRho;
+			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg
 
 			% Cargo lista de forzantes y arroja error si es que 
 			% hay más de uno actuando sobre el sistema.
@@ -230,8 +255,6 @@ classdef Matrices < hgsetget
 				% Si es permanente	
 					
 				forzanteExterno = sparse(Neta + New + Nns, 1);
-%				queSeAsignaX = listaForzantesCell{1}.DireccionX;
-%				queSeAsignaY = listaForzantesCell{1}.DireccionY;
 				queSeAsignaX = listaForzantes{1}.DireccionX;
 				queSeAsignaY = listaForzantes{1}.DireccionY;
 
@@ -246,6 +269,14 @@ classdef Matrices < hgsetget
 
 			borrarBordes = [ID(nBIz,1);ID(nBDe,2);ID(nBSu,3);ID(nBIn,4)]; 
 			forzanteExterno(borrarBordes, :) = [];
+
+			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+				forzanteExterno = forzanteExterno*longCar/(rho*g*hprom^2);
+				tiempoCar = 2*longCar/(sqrt(g*hprom));
+				vectorTiempo = vectorTiempo/tiempoCar;
+			end
+
 			thisMatrices.f = forzanteExterno;
 			thisMatrices.Tiempo = vectorTiempo;
 
@@ -276,8 +307,10 @@ classdef Matrices < hgsetget
 			nBDe = malla.numeroBordesDerecho;
 			nBSu = malla.numeroBordesSuperior;
 			nBIn = malla.numeroBordesInferior;
-			
+			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg			
+	
 			rho = cuerpo.Fluido.densidadRho;
+			g = parametros.aceleracionGravedad;
 			fila = (1:Neta)';
 
 			% Cargo lista de forzantes y arroja error si es que 
@@ -373,6 +406,12 @@ classdef Matrices < hgsetget
 			C33(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 
 			C = i*rho*[C11,C12,C13;C21,C22,C23;C31,C32,C33];
+
+			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+				C = C*longCar/(rho*hprom*sqrt(g*hprom));
+			end
+
 			thisMatrices.C = C;
 
 		end % function matrizC

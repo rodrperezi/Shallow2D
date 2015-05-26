@@ -27,55 +27,15 @@ classdef Batimetria < hgsetget
 		
 		end %function batimetriaKranenburg
 
-%		function thisBatimetria = generaBatimetriaKranenburg(thisBatimetria, Geometria)
-
-%			malla = Geometria.Malla;
-%			centroMasa = Geometria.centroMasa;
-%			radio = Geometria.parametrosGeometria.Radio;
-%			hKran = Geometria.parametrosGeometria.Altura;	
-%			borde = Geometria.Borde.coordenadasXY;
-
-%			kranenburg = inline('0.5 + sqrt(0.5 - 0.5*sqrt((x-centroMasa(1)).^2 + (y-centroMasa(2)).^2)/radio)', 'x', 'y', 'centroMasa', 'radio');
-%			coordenadasEta = malla.coordenadasEta;
-%			coordenadasU = malla.coordenadasU;
-%			coordenadasV = malla.coordenadasV;
-
-%			hoNodosEta = kranenburg(coordenadasEta(:,1), coordenadasEta(:,2), centroMasa, radio);			
-%			hoNodosU = kranenburg(coordenadasU(:,1), coordenadasU(:,2), centroMasa, radio);	
-%			hoNodosV = kranenburg(coordenadasV(:,1), coordenadasV(:,2), centroMasa, radio);
-
-%			% Los nodos que tengan ho complejo, significa que están 
-%			% levemente por fuera de la circunferencia del borde. 
-%			% En este caso, la parte real (0.5) es el valor que 
-%			% se adopta puesto que es la profundidad en el borde.			
-%	
-%			hoNodosEta = real(hoNodosEta);				
-%			hoNodosU = real(hoNodosU);
-%			hoNodosV = real(hoNodosV);
-%			
-%%			interpolador = TriScatteredInterp(coordenadasEta(:,1), coordenadasEta(:,2), hoNodosEta);
-%%			hoNodosU = interpolador(coordenadasU(:,1), coordenadasU(:,2));		
-%%			hoNodosV = interpolador(coordenadasV(:,1), coordenadasV(:,2));
-
-
-%			thisBatimetria.hoNodosU = hoNodosU*hKran;
-%			thisBatimetria.hoNodosV = hoNodosV*hKran;
-%			thisBatimetria.hoNodosEta = hoNodosEta*hKran;
-%% 			thisBatimetria.hoNodosU = ones(length(hoNodosU),1)*hKran;
-%% 			thisBatimetria.hoNodosV = ones(length(hoNodosV),1)*hKran;
-%% 			thisBatimetria.hoNodosEta = ones(length(hoNodosEta),1)*hKran;
-
-%		end % generaBatimetriaKranenburg
-
-		function thisBatimetria = generaBatimetriaKranenburg(thisBatimetria, Geometria)
+		function thisBatimetria = generaBatimetriaKranenburg(thisBatimetria, geometria)
 		% generaBatimetriaKranenburg: Construye una estructura batimetria que contiene
 		% los valores de la profundidad de la hoya en el estado no perturbado
 		
-			malla = Geometria.Malla;
-			centroMasa = Geometria.centroMasa;
-			radio = Geometria.parametrosGeometria.Radio;
-			hKran = Geometria.parametrosGeometria.Altura;	
-			borde = Geometria.Borde.coordenadasXY;
+			malla = geometria.Malla;
+			centroMasa = geometria.centroMasa;
+			radio = geometria.radioR;
+			hKran = geometria.alturaH;	
+			borde = geometria.Borde.coordenadasXY;
 			coordenadasEta = malla.coordenadasEta;
 			coordenadasU = malla.coordenadasU;
 			coordenadasV = malla.coordenadasV;
@@ -147,5 +107,46 @@ classdef Batimetria < hgsetget
 	end %methods
 end %classdef
 
+%%%%%%%%%%%%%%%%%%%% THRASH
+
+%		function thisBatimetria = generaBatimetriaKranenburg(thisBatimetria, Geometria)
+
+%			malla = Geometria.Malla;
+%			centroMasa = Geometria.centroMasa;
+%			radio = Geometria.parametrosGeometria.Radio;
+%			hKran = Geometria.parametrosGeometria.Altura;	
+%			borde = Geometria.Borde.coordenadasXY;
+
+%			kranenburg = inline('0.5 + sqrt(0.5 - 0.5*sqrt((x-centroMasa(1)).^2 + (y-centroMasa(2)).^2)/radio)', 'x', 'y', 'centroMasa', 'radio');
+%			coordenadasEta = malla.coordenadasEta;
+%			coordenadasU = malla.coordenadasU;
+%			coordenadasV = malla.coordenadasV;
+
+%			hoNodosEta = kranenburg(coordenadasEta(:,1), coordenadasEta(:,2), centroMasa, radio);			
+%			hoNodosU = kranenburg(coordenadasU(:,1), coordenadasU(:,2), centroMasa, radio);	
+%			hoNodosV = kranenburg(coordenadasV(:,1), coordenadasV(:,2), centroMasa, radio);
+
+%			% Los nodos que tengan ho complejo, significa que están 
+%			% levemente por fuera de la circunferencia del borde. 
+%			% En este caso, la parte real (0.5) es el valor que 
+%			% se adopta puesto que es la profundidad en el borde.			
+%	
+%			hoNodosEta = real(hoNodosEta);				
+%			hoNodosU = real(hoNodosU);
+%			hoNodosV = real(hoNodosV);
+%			
+%%			interpolador = TriScatteredInterp(coordenadasEta(:,1), coordenadasEta(:,2), hoNodosEta);
+%%			hoNodosU = interpolador(coordenadasU(:,1), coordenadasU(:,2));		
+%%			hoNodosV = interpolador(coordenadasV(:,1), coordenadasV(:,2));
+
+
+%			thisBatimetria.hoNodosU = hoNodosU*hKran;
+%			thisBatimetria.hoNodosV = hoNodosV*hKran;
+%			thisBatimetria.hoNodosEta = hoNodosEta*hKran;
+%% 			thisBatimetria.hoNodosU = ones(length(hoNodosU),1)*hKran;
+%% 			thisBatimetria.hoNodosV = ones(length(hoNodosV),1)*hKran;
+%% 			thisBatimetria.hoNodosEta = ones(length(hoNodosEta),1)*hKran;
+
+%		end % generaBatimetriaKranenburg
 
 
