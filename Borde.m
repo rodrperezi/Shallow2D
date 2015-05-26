@@ -44,6 +44,14 @@ classdef Borde < hgsetget
 			thisBorde.coordenadasXY = bordeRectangular;
 		end %function generaBordeRectangular
 
+		function matrizIndices = puntosDentroBorde(borde, espacioX, espacioY)
+	
+			coordenadasXY = borde.coordenadasXY;
+			[meshX meshY] = meshgrid(espacioX, espacioY); % Construyo meshgrid de dominio
+			matrizIndices = inpolygon(meshX, meshY, coordenadasXY(:,1), coordenadasXY(:,2)); 
+
+		end % function puntosDentroBorde
+
 %		function bordeDatos()
 
 %		end
