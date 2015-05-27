@@ -9,6 +9,20 @@ classdef Transporte
 	end
 
 	methods
+%				% Esta condicion la pondré en la clase Transporte
+%				if strcmpi(superclase, 'TransporteOD') 
+%				% Si es que quiero asignar resultados de 
+%				% transporte, necesito que existan los de 
+%				% hidrodinamica					
+%					if ~isempty(res.Hidrodinamica)					
+%					% Si es que no está vacío, entonces
+%					% asigna
+%					
+
+%					end
+
+%				end %end
+
 
 		function thisTransporte = Transporte(Cuerpo, Hidrodinamica, dispersion)
 
@@ -27,8 +41,13 @@ classdef Transporte
 			
 			end
 
+		end % Transporte
+	end % methods
+end % classdef
 
-			
+
+
+%%%%%%%%% THRASH
 
 			
 %			if nargin == 2
@@ -42,8 +61,5 @@ classdef Transporte
 
 % 			end		
 
-		end
 
-	end
-end
 

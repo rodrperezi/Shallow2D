@@ -1,24 +1,33 @@
-classdef Hidrodinamica < hgsetget
+classdef Hidrodinamica < Motor
 
-	% HIDRODINAMICA es un objeto que contiene los resultados
-	% de la hidrodinamica para los motores de calculo utilizados.
+	% HIDRODINAMICA es la clase que agrupa los motores
+	% de cálculo que resuelven el problema hidrodinámico
 
 	properties
 
-		Motor
-		SolucionEta
-		SolucionU
-		SolucionV
-		Tiempo
+		RegimenTemporal
+		Solucion
+		Solucion2D	
+		Tiempo	
+		% ObjetoCalculo
+		% RegimenTemporal
+		% Solucion		
+		% Motor
+		% SolucionEta
+		% SolucionU
+		% SolucionV
+		% Tiempo
 
 	end
 
 	methods
 
 		function thisHidrodinamica = Hidrodinamica()
-			thisHidrodinamica;
-		end
-
-	end
-end
+				
+			if nargin == 0			
+				thisHidrodinamica;
+			end %if
+		end % Hidrodinamica
+	end %methods
+end %classdef
 

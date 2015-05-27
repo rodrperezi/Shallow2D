@@ -1,4 +1,4 @@
-classdef CrankNicolson < Motor
+classdef CrankNicolson < Hidrodinamica
 
 	% CRANKNICOLSON es el motor que procesa la información 
 	% utilizando la metodología de cálculo de Crank Nicolson

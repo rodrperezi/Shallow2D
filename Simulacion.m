@@ -13,8 +13,7 @@ classdef Simulacion < hgsetget
 	%	    Cuerpo
 	%	    ListaForzantes
 	%	    Matrices
-	%	    AnalisisModal
-	%	    CrankNicolson
+	% 	    Resultados
 	% 
 	
 
@@ -23,8 +22,7 @@ classdef Simulacion < hgsetget
 		Cuerpo
 		ListaForzantes
 		Matrices
-		AnalisisModal
-		CrankNicolson
+		Resultados
 
 	end
 
@@ -49,10 +47,8 @@ classdef Simulacion < hgsetget
 						% 	thisSimulacion.Forzantes = varargin{iVariable};
 						case 'Matrices'
 							thisSimulacion.Matrices = varargin{iVariable};
-						case 'AnalisisModal'
-							thisSimulacion.AnalisisModal = varargin{iVariable};
-						case 'CrankNicolson'
-							thisSimulacion.CrankNicolson = varargin{iVariable};
+						case 'Resultados'
+							thisSimulacion.Resultados = varargin{iVariable};
 						otherwise 
 							error(['Wrong input argument: Clase Simulacion no trabaja con ', class(varargin{iVariable})])
 
@@ -62,6 +58,53 @@ classdef Simulacion < hgsetget
 		end %function Simulacion
 		
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+		
+		function thisSimulacion= addMatrices(thisSimulacion, matrices)
+
+			if strcmpi(class(matrices), 'Matrices')
+				thisSimulacion.Matrices = matrices;
+			else					
+				error(['El objeto es de clase ' , class(matrices) ...
+				  , '. Debe ser de clase Matrices'])
+			end %if
+
+		end %addMatrices
+		
+		function thisSimulacion= addResultados(thisSimulacion, objeto)
+		% Por ahora esta funcion admite solo un resultado para 	
+		% la hidrodinamica y el transporte.	
+			superclase = superclasses(objeto);
+			superclase = superclase{1}; % Me quedo con la clase que antecede 
+			propiedades = properties(Resultados);
+			% Veo si la clase que antecede es hidrodinamica o transporte
+			existe = strcmpi(propiedades, superclase); 
+
+			if(sum(existe) == 1)
+			% Si es que existe
+				cual = find(existe);	
+
+				if isempty(thisSimulacion.Resultados)			
+				% Si es que aún no se crean Resultados para la simulacion
+				% los creo.
+					res = Resultados();
+				else
+				% Si es que ya han sido creados los Resultados
+				% los invoco
+					res = thisSimulacion.Resultados;			
+				end %if
+				
+				if isempty(objeto.Solucion)
+					error(['El objeto de clase ', class(objeto),' aun no ha sido computado'])	
+				else
+					str = ['res.',propiedades{cual}, ' = objeto;'];
+					eval(str)
+					thisSimulacion.Resultados = res;
+				end
+			
+			else 
+				error(['El objeto de clase ', class(objeto),' no corresponde a Resultados'])
+			end %if			
+		end %addResultados
 
 		function thisSimulacion = addForzante(thisSimulacion, forzante)
 			

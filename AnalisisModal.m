@@ -1,34 +1,40 @@
-classdef AnalisisModal < Motor
+classdef AnalisisModal < Hidrodinamica
 
 	% ANALISISMODAL es el motor que procesa la información 
 	% utilizando la teoría del análisis modal
 
 	properties 
 
-		RegimenTemporal
-		Solucion
-		Solucion2D	
-		Tiempo	
-		VyVPropios		
+%		Tipo
+%		RegimenTemporal
+%		Solucion
+%		Solucion2D	
+%		Tiempo	
+		VyVPropios
+		tiempoComputo		
 	
 	end
 
 	methods
 
 		function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
-		% function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
 		% Constructor del objeto AnalisisModal
-					
-			thisAnalisisModal;
-			thisAnalisisModal.Tipo = 'AnalisisModal';
-			thisAnalisisModal.RegimenTemporal = regimenTemporal;
-			thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
-			if(~strcmpi(regimenTemporal, 'modoslibres'))
-				thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
-			end
-			% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
-			% thisAnalisisModal.Solucion2D = Solucion2D;
 
+			if nargin == 0
+				thisAnalisisModal;
+			else
+
+				thisAnalisisModal.Tipo = 'AnalisisModal';
+				thisAnalisisModal.RegimenTemporal = regimenTemporal;
+				thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
+				if(~strcmpi(regimenTemporal, 'modoslibres'))
+					thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
+				end
+				% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
+				% thisAnalisisModal.Solucion2D = Solucion2D;
+%				res = Resultados(thisAnalisisModal);
+%				simulacion.Resultados = res;
+			end %if
 		end %function AnalisisModal
 
 		function thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion)
@@ -40,8 +46,8 @@ classdef AnalisisModal < Motor
 				[M, K, C] = getMatrices(simulacion);
 			
 			% Resuelvo problema por la derecha. 
-			[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
-			valoresDerecha = diag(valoresDerecha);
+				[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
+				valoresDerecha = diag(valoresDerecha);
 			% keyboard
 			% Corto decimales que sean menores que la precision del programa
 
@@ -199,12 +205,12 @@ classdef AnalisisModal < Motor
 
 						solAcumulada = solModosR + solModosOmegaCero;
 
-						sPlot(1) = subplot(2,2,1);
-						graficaModo(simulacion, solModosR)
-						sPlot(2) = subplot(2,2,2);
-						graficaModo(simulacion, solModosOmegaCero)
-						sPlot(3) = subplot(2,2,3);
-						graficaModo(simulacion, solAcumulada)
+%						sPlot(1) = subplot(2,2,1);
+%						graficaModo(simulacion, solModosR)
+%						sPlot(2) = subplot(2,2,2);
+%						graficaModo(simulacion, solModosOmegaCero)
+%						sPlot(3) = subplot(2,2,3);
+%						graficaModo(simulacion, solAcumulada)
 
 						% keyboard					
 						thisAnalisisModal.Solucion = solAcumulada;

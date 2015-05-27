@@ -29,7 +29,9 @@ classdef Resultados
 	methods
 
 		function thisResultados = Resultados()
+			if nargin == 0
 				thisResultados;
-		end
-	end
-end
+			end %if
+		end %Resultados
+	end %methods
+end %classdef
