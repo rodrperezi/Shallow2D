@@ -1,23 +1,44 @@
 classdef Cuerpo < hgsetget
 	 
-	% CUERPO se entiende como un cuerpo de fluido
-	% Los objetos creados con la clase cuerpo tienen
-	% como propiedades objetos de las clases GEOMETRIA, FLUIDO, 
-	% PARAMETROS.
+	% CUERPO es un cuerpo de fluido. Conceptualmente está definido	
+	% por la GEOMETRIA que contiene un FLUIDO y para los cuales 
+	% se utiliza un set de PARAMETROS para resolver el problema. 
+	% 
+	% >> properties(Cuerpo)  
+	% 
+	%	Properties for class Cuerpo:
+	% 
+	%	    Geometria
+	%	    Fluido
+	%	    Parametros
+	%	    ID
+	% 
 	% Los componentes anteriores contienen la información necesaria
 	% y detallada de las variables hidrodinámicas y numéricas.
-	% Batimetría, malla numérica son algunos ejemplos.
+	% 
+	% Construcción:
+	% 
 	% Por defecto, un cuerpo se construye con los parámetros
 	% especificados en la clase PARAMETROS y con agua como 
 	% objeto de la clase FLUIDO. Estas propiedades pueden 
-	% ser modificadas.
+	% ser modificadas. En este caso, sólo resta especficar 
+	% la GEOMETRIA para que el cuerpo quede correctamente definido.
+	% 
+	% thisCuerpo = Cuerpo(thisCuerpo, geo);
+	% thisCuerpo = addGeometria(thisCuerpo, geo);
+	% thisCuerpo.Geometria = geo;
+	% 
+	% En caso de querer asignar o modificar alguna de las otras propiedades
+	% estas se pueden asignar usando el constructor del objeto:
+	% 
+	% thisCuerpo = Cuerpo(thisCuerpo, fluido, parametros)
         
 	 properties
      
 		Geometria 
 		Fluido
 		Parametros
-		IDCuerpo
+		ID
         
 	end
     
@@ -33,9 +54,14 @@ classdef Cuerpo < hgsetget
 
 			else
 
+				thisCuerpo.Parametros = Parametros();			
+				thisCuerpo.Fluido = Fluido('Agua', thisCuerpo.Parametros.densidadRho, thisCuerpo.Parametros.viscosidadNu);
+
 				for iVariable = 1:length(varargin)
 					switch class(varargin{iVariable})
 						case 'Geometria' 
+							thisCuerpo.Geometria = varargin{iVariable};
+						case 'GeoKranenburg' 
 							thisCuerpo.Geometria = varargin{iVariable};
 						case 'Parametros'
 							thisCuerpo.Parametros = varargin{iVariable};
@@ -52,7 +78,7 @@ classdef Cuerpo < hgsetget
 				
 			thisCuerpo.Geometria = geometria;			
 					
-		end %function getMalla
+		end %function addGeometria
 
 
 		function malla = getMalla(cuerpo)

@@ -1,8 +1,22 @@
 classdef Simulacion < hgsetget
 
-	% SIMULACION es un objeto que contiene toda la informacion 
-	% geométrica, forzantes, resultados entre otras
-	% caracteristícas de un problema.
+	% SIMULACION es un objeto que contiene la informacion 
+	% que caracteriza a un problema. Conceptualmente
+	% sobre un CUERPO de fluido actúa una serie de FORZANTES
+	% a partir de los cuales se construyen las MATRICES  
+	% que representan numéricamente al problema.
+	% 
+	% >> properties(Simulacion)
+	% 
+	%	Properties for class Simulacion:
+	% 
+	%	    Cuerpo
+	%	    ListaForzantes
+	%	    Matrices
+	%	    AnalisisModal
+	%	    CrankNicolson
+	% 
+	
 
 	properties
 

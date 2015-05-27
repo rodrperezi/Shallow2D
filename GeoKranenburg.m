@@ -1,34 +1,55 @@
 classdef GeoKranenburg < Geometria
 
-	% KRANENBURG es el objeto que caracteriza a la 
+	% GEOMETRIA -> GEOKRANENBURG es el objeto que caracteriza la 
 	% batimetría de Kranenburg (1992) dada por la ecuación 
 	% 
-	% 	h(x,y)/H = 0.5 + sqrt(0.5 - 0.5*sqrt((x-centroMasa(1)).^2 + (y-centroMasa(2)).^2)/R)
+	% h(x,y)/H = 0.5 + sqrt(0.5 - 0.5*sqrt((x-centroMasa(1)).^2 + ...
+	% 	     (y-centroMasa(2)).^2)/R)
 	% 
-	% siendo H una altura característica de la batimetría y R el radio de la circunferencia 
-	% describe el borde. centroMasa = [x_cm y_cm] es el vector que contiene las coordenadas
-	% [x_cm y_cm] del centro de masa de la hoya.
-
-			% Se asume en varargin que la asignacion de las propiedades
-			% de la hoya es del tipo
-			% 		
-			% 	thisKranenburg = Kranenburg(thisKranenburg, 'prop1', valor1, 'prop2', valor2...);
-			% 	
-			% De manera de conservar el estilo de Matlab.
-			% 	
-			% 
-			% En este caso particular, este objeto tiene tres propiedades 
-			% y por lo tanto varargin tiene un largo máximo de 
-			% de 7 elementos, siendo las posiciones pares de varargin strings 
-			% que contienen el nombre de la propiedad a asignar entre comillas 
-			% y las posiciones impares (excepto uno) contienen el valor 
-			% de la respectiva propiedad que les antecede en varargin. 
-			% Las posiciones pares deben ser por definición strings
-			% que definan alguna propiedad del objeto. Por lo tanto, 
-			% no puede haber una asignación de propiedades mayor 
-			% a la cantidad de propiedades del objeto y la propiedad
-			% a asignar tiene que existir dentro de la definición 
-			% del objeto.
+	% siendo H una altura característica de la batimetría y R el radio de 
+	% la circunferencia que describe el borde. centroMasa = [x_cm y_cm] 
+	% es el vector que contiene las coordenadas [x_cm y_cm] del centro de 
+	% masa de la hoya.
+	% 
+	% El objeto se construye como: 
+	% 		
+	% thisGeoKranenburg = 
+	% GeoKranenburg(thisGeoKranenburg, 'prop1', valor1, 'prop2', valor2...);
+	% 	
+	% de manera de conservar el estilo de Matlab. Las propiedades
+	% del objeto son 
+	% 
+	% >> properties(GeoKranenburg)
+	% 
+	% 	Properties for class GeoKranenburg:
+	% 
+	% 	    radioR
+	% 	    alturaH
+	% 	    centroMasa
+	%  	    Borde
+	%  	    Malla
+	% 	    Batimetria	
+	% 
+	% Aquellas propiedades que comienzan con minúscula son valores 
+	% númericos a partir de los cuales se construyen los demás 
+	% objetos. Por lo tanto, solo basta ASIGNAR 
+	% 	    
+	% 	    radioR
+	% 	    alturaH
+	% 	    centroMasa
+	%
+	% para que se construya el objeto. En este caso particular, 
+	% el objeto tiene tres propiedades y por lo tanto el argumento
+	% tiene un largo máximo de 7 elementos, siendo las posiciones 
+	% pares strings que contienen el nombre de la propiedad a asignar 
+	% entre comillas ('ejemplo') y las posiciones impares 
+	% (excepto la primera) contienen el valor 
+	% de la respectiva propiedad que les antecede en los argumentos. 
+	% Las posiciones pares deben ser por definición strings
+	% que definan alguna propiedad del objeto. Por lo tanto, 
+	% no puede haber una asignación de propiedades mayor 
+	% a la cantidad de propiedades del objeto y la propiedad
+	% a asignar tiene que existir dentro del objeto.
 
 
 	properties

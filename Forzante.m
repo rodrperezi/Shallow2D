@@ -1,5 +1,25 @@
 classdef Forzante < hgsetget
 
+	% FORZANTE es el objeto que caracteriza a un forzante
+	% que actúa sobre un cuerpo de fluido. 
+	% 
+	% >> properties(Forzante)
+	% 
+	%	Properties for class Forzante:
+	% 
+	%	    Tipo
+	%	    RegimenTemporal
+	%	    Tiempo
+	%	    DireccionX
+	%	    DireccionY
+	% 
+	% Tipo es el nombre del forzante o clase de forzante, RegimenTemporal
+	% especifica si el forzante es permanente o impermanente, Tiempo
+	% contiene el vector de tiempo en el caso que el forzante sea 
+	% impermanente y es vacío en el caso de que el forzante sea permanente
+	% DireccionX y DireccionY caracteriza la magnitud del forzante 
+	% en el eje respectivo.
+
 	properties
 
 		Tipo

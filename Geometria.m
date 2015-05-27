@@ -1,8 +1,23 @@
 classdef Geometria < hgsetget
 
-	% GEOMETRIA se entiende como las caracteristicas físicas
-	% que identifican a un cuerpo. Entre ellas se incluye el borde,
-	% la batimetría,  la malla y otros parametros. 	
+	% GEOMETRIA son las características físicas de un problema.
+	% Conceptulamente se entiende que un objeto de la clase
+	% está definido por un BORDE que delimita la superficie.
+	% Dentro de este borde se construye la MALLA, a partir de la cual 
+	% se construye finalmente la BATIMETRIA. Como propiedad numérica
+	% tiene el centro de masa de la geometría el cual es un vector del 
+	% tipo centroMasa = [x_cm y_cm];
+	% 
+	% >> properties(Geometria)
+	% 
+	%	Properties for class Geometria:
+	% 
+	%	    centroMasa
+	%	    Borde
+	%	    Malla
+	%	    Batimetria
+	% 
+
 
 	properties
 

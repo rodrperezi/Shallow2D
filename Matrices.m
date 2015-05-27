@@ -2,11 +2,37 @@ classdef Matrices < hgsetget
 
 	% MATRICES es el objeto que contiene las matrices utilizadas
 	% en la resolución del problema del analisis modal. 
-	% El problema que resuelve son las ecuaciones de continuidad
+	% El problema a resolver son las ecuaciones de continuidad
 	% y momentum linealizas expresadas como 
-	% M \partial_t \chi = i(K + C) \chi + f. 
+	% 
+	% 	M \partial_t \chi = i(K + C) \chi + f. 
+	% 
 	% Para mayor información con respecto al significado de cada término
-	% ver Shimizu e Imberger (2008)
+	% ver Shimizu e Imberger (2008).
+	%
+	% >> properties(Matrices)
+	%
+	%	Properties for class Matrices:
+	%
+	%	    M
+	%	    K
+	%	    C
+	%	    f
+	%	    Tiempo
+	%	    Tipo
+	% 
+	% Tiempo es un vector de tiempo que existe solo si el forzante
+	% es impermanente. Tipo es un string que caracteriza 
+	% el tipo de matriz y su construcción. Puede ser 'dimensional', 
+	% 'adimensional', 'modosLibres' o vacío.
+	% 
+	% Las matrices se construyen para una simulación como 
+	% 
+	% thisMatrices = Matrices(simulacion, tipo)
+	% 
+	% El constructor asigna inmediatamente las matrices a la simulacion.
+	% 
+
 
 	properties 
 
@@ -27,25 +53,32 @@ classdef Matrices < hgsetget
 			% el forzante. Por otro lado, la matriz C si requiere conocer
 			% el forzante dado que el coeficiente de friccion 
 			% depende de esto.
-					
-			thisMatrices;
+		
+			if nargin == 0
+		
+				thisMatrices;
 
-			if(isempty(varargin))
-				thisMatrices.Tipo = 'Dimensional';
-				thisMatrices = matricesMK(thisMatrices, simulacion);
-				thisMatrices = vectorForzante(thisMatrices, simulacion);
-				thisMatrices = matrizC(thisMatrices, simulacion);
-			elseif(strcmpi(varargin, 'modoslibres'))	
-				thisMatrices.Tipo = 'ModosLibres';
-				thisMatrices = matricesMK(thisMatrices, simulacion);
-				thisMatrices.C = sparse(zeros(size(thisMatrices.K)));			
-			elseif(strcmpi(varargin, 'adimensional'))	
-				thisMatrices.Tipo = 'Adimensional';
-				thisMatrices = matricesMK(thisMatrices, simulacion);
-				thisMatrices = vectorForzante(thisMatrices, simulacion);
-				thisMatrices = matrizC(thisMatrices, simulacion);
-			end
+			else
+	
+				if(isempty(varargin) || strcmpi(varargin, 'modoslibres'))
+					thisMatrices.Tipo = 'Dimensional';
+					thisMatrices = matricesMK(thisMatrices, simulacion);
+					thisMatrices = vectorForzante(thisMatrices, simulacion);
+					thisMatrices = matrizC(thisMatrices, simulacion);
+				elseif(strcmpi(varargin, 'modoslibres'))	
+					thisMatrices.Tipo = 'ModosLibres';
+					thisMatrices = matricesMK(thisMatrices, simulacion);
+					thisMatrices.C = sparse(zeros(size(thisMatrices.K)));			
+				elseif(strcmpi(varargin, 'adimensional'))	
+					thisMatrices.Tipo = 'Adimensional';
+					thisMatrices = matricesMK(thisMatrices, simulacion);
+					thisMatrices = vectorForzante(thisMatrices, simulacion);
+					thisMatrices = matrizC(thisMatrices, simulacion);
+				end
+			
+				simulacion.Matrices = thisMatrices;				
 
+			end %if
 		end %function Matrices
 
 
