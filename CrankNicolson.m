@@ -1,33 +1,75 @@
 classdef CrankNicolson < Hidrodinamica
 
-	% CRANKNICOLSON es el motor que procesa la información 
-	% utilizando la metodología de cálculo de Crank Nicolson
+	% HIDRODINAMICA -> CRANKNICOLSON es uno de los motores 
+	% que resuelven el flujo hidrodinámico utilizando 
+	% la metodología impermanente de Crank Nicolson
+	% 
+	% Construcción:
+	% 
+	% Actualmente el constructor de la clase sólo requiere
+	% como entrada un objeto de clase SIMULACION de la forma 
+	% 
+	% 	thisCrankNicolson = CrankNicolson(simulacion)
+	% 
+	% Por ahora, la metodología de cálculo incluye un vector
+	% de tiempo arbitrario para el caso en que el forzante
+	% es constante. Lo ideal sería implementar una forma
+	% de construcción tal que se pueda especificar el vector de tiempo
+	% o que este se construya a partir de algunos parámetros 
+	% característicos del problema que se esté resolviendo.
+	% Sin embargo, en el caso que el forzante es impermanente como 
+	% es el caso de una serie de aceleración o de viento, el motor
+	% resuelve las ecuaciones utilizando el vector de tiempo especificado
+	% en el forzante.
+	% 
+	% Propiedades:
+	% 
+	% >> properties(CrankNicolson)
+	%
+	%	Properties for class CrankNicolson:
+	%
+	%	    tiempoComputo
+	%	    RegimenTemporal
+	%	    Solucion
+	%	    Solucion2D
+	%	    Tiempo
+	%	    Tipo
 
 	properties 
 
-		RegimenTemporal
-		Solucion
-		Solucion2D	
-		Tiempo	
-	
+	%	RegimenTemporal
+	%	Solucion
+	%	Solucion2D	
+	%	Tiempo	
+		tiempoComputo	
+
 	end % properties
 
 	methods
 
 		function thisCrankNicolson = CrankNicolson(simulacion)
-		% function simulacion = CrankNicolson(simulacion)
-	
-			thisCrankNicolson;
-			thisCrankNicolson.RegimenTemporal = 'impermanente';
-			thisCrankNicolson = crankNicolson(thisCrankNicolson, simulacion);
-			[Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisCrankNicolson.Solucion);
-			thisCrankNicolson.Solucion2D = Solucion2D;
+		% function thisCrankNicolson = CrankNicolson(simulacion)	
+		% Constructor de la clase
 
-		end
+			if nargin == 0
+				thisCrankNicolson;
+			else
+				tic
+				thisCrankNicolson.Tipo = 'CrankNicolson';
+				thisCrankNicolson.RegimenTemporal = 'impermanente';
+				thisCrankNicolson = crankNicolson(thisCrankNicolson, simulacion);
+				% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisCrankNicolson.Solucion);
+				% thisCrankNicolson.Solucion2D = Solucion2D;
+				thisCrankNicolson.tiempoComputo = toc;
+			end %if
+		end %CrankNicolson
 
 
 		function thisCrankNicolson = crankNicolson(thisCrankNicolson, simulacion)
-	
+		% function thisCrankNicolson = crankNicolson(thisCrankNicolson, simulacion)
+		% Función que resuelve la simulación utilizando la metodología
+		% de CrankNicolson.
+
 				[M, K, C] = getMatrices(simulacion);
 				matrices = simulacion.Matrices;
 				forzanteExterno = matrices.f;
@@ -57,7 +99,7 @@ classdef CrankNicolson < Hidrodinamica
 				end
 
 
-				barraEspera = waitbar(0,'Please wait..');
+				barraEspera = waitbar(0,'Resolviendo hidrodinámica con Crank Nicolson...');
 				SOLri = sparse(length(forzanteExterno(:,1)),length(tiempoCalculo));
 
 				for iTiempo = 2:nTiempoCalculo
@@ -72,7 +114,6 @@ classdef CrankNicolson < Hidrodinamica
 
 				thisCrankNicolson.Solucion = SOLri;
 				thisCrankNicolson.Tiempo = tiempoCalculo;
-				% simulacion.CrankNicolson = thisCrankNicolson;
 
 		end % function CrankNicolson
 	end % methods

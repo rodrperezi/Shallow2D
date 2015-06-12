@@ -7,7 +7,7 @@ classdef Resultados
 	% contienen la solución al problema hidrodinámico y de
 	% transporte de masa, respectivamente.
 	%  
-	% Construcción: 
+	% Construcción: CORREGIR
 	% 
 	% Se aplica a un objeto de clase CUERPO y se debe especificar
 	% el motor de cálculo. 
@@ -22,7 +22,7 @@ classdef Resultados
 	properties
 
 		Hidrodinamica
-		Transporte
+		TransporteOD
 
 	end
 

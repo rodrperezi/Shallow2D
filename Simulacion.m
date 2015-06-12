@@ -1,10 +1,43 @@
 classdef Simulacion < hgsetget
 
 	% SIMULACION es un objeto que contiene la informacion 
-	% que caracteriza a un problema. Conceptualmente
-	% sobre un CUERPO de fluido actúa una serie de FORZANTES
+	% que caracteriza a un problema. Conceptualmente,
+	% sobre un CUERPO de fluido actúa una serie de FORZANTEs
 	% a partir de los cuales se construyen las MATRICES  
 	% que representan numéricamente al problema.
+	% 
+	% Construcción:
+	% 
+	% Los objetos de esta clase se pueden construir de varias formas.
+	% Una de ellas es mediante
+	% 
+	% 	thisSimulacion = Simulacion(thisSimulacion, varargin)
+	% 
+	% varargin puede contener objetos que sean de clase CUERPO, MATRICES
+	% o RESULTADOS y el constructor los asigna automáticamente.
+	% Otra forma de construir un objeto de la clase es crear un objeto 
+	% vacío y agregar los elementos mediante la función específica
+	% 
+	%	thisSimulacion = Simulacion(); 
+	% 	thisSimulacion = addObjeto(thisSimulacion, objeto);
+	% 
+	% La función addObjeto no existe sino que es una referencia conceptual
+	% que permite ejemplificar como se agregan los objetos. Así, si se 
+	% desea agregar un objeto de clase CUERPO entonces el comando 
+	% sería
+	% 
+	% 	thisSimulacion = addCuerpo(thisSimulacion, cuerpo);
+	% 
+	% Otros ejemplos
+	% 	
+	% 	thisSimulacion = addForzante(thisSimulacion, forzante);
+	% 	thisSimulacion = addMatrices(thisSimulacion, matrices);
+	% 	thisSimulacion = addResultados(thisSimulacion, resultados);
+	% 
+	% Para ver un listado detallado de las funciones que contiene la clase
+	% ejecutar methods(Simulacion)
+	% 
+	% Propiedades:	
 	% 
 	% >> properties(Simulacion)
 	% 
@@ -15,7 +48,7 @@ classdef Simulacion < hgsetget
 	%	    Matrices
 	% 	    Resultados
 	% 
-	
+
 
 	properties
 
@@ -57,7 +90,13 @@ classdef Simulacion < hgsetget
 			end %if
 		end %function Simulacion
 		
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+		function thisSimulacion = addCuerpo(thisSimulacion, cuerpo)
+				
+			thisSimulacion.Cuerpo = cuerpo;			
+					
+		end %function addCuerpo
 		
 		function thisSimulacion= addMatrices(thisSimulacion, matrices)
 
@@ -211,6 +250,24 @@ classdef Simulacion < hgsetget
 					
 		end %function getCuerpo
 
+		function resultados = getResultados(simulacion)
+				
+			resultados = simulacion.Resultados;			
+					
+		end %function getResultados
+
+		function hidrodinamica = getHidrodinamica(simulacion)
+				
+			hidrodinamica = simulacion.Resultados.Hidrodinamica;			
+					
+		end %function getHidrodinamica
+
+		function transporteOD = getTransproteOD(simulacion)
+				
+			transporteOD = simulacion.Resultados.TransporteOD;			
+					
+		end %function getTransproteOD
+
 		function borde = getBorde(simulacion)
 				
 			borde = simulacion.Cuerpo.Geometria.Borde;			
@@ -264,11 +321,110 @@ classdef Simulacion < hgsetget
 					
 		end %function getCompiladoBatimetria
 
-		
+		function [numeroNodosEta varargout] = getNumeroNodos(simulacion)
+			if nargin == 1
+				malla = getMalla(simulacion);
+				numeroNodosEta = malla.numeroNodosEta;
+				numeroNodosU = malla.numeroNodosU;
+				numeroNodosV = malla.numeroNodosV;
+	
+				argoutExtra = max(nargout,1)-1;
+				argoutAux = [numeroNodosU, numeroNodosV];		
+				for k = 1:argoutExtra, varargout(k) = {argoutAux(k)}; end
+			end
+		end %function getNumeroNodos
 
+		function thisSimulacion = solucion2D(thisSimulacion, cualSolucion)
+		% function varargout = solucion2D(thisSimulacion)
+		% Función que transforma el vector de solución en 
+		% matrices bidimensionales. cualSolucion es un string
+		% que especifica si se debe llevar a dos dimensiones 
+		% la solucion 'Hidrodinamica' o la solucion de 'Transporte'
+
+			% if nargin == 2
+		
+			if strcmpi(cualSolucion, 'hidrodinamica')
+				if isempty(thisSimulacion.Resultados) 
+					error(['La simulacion aún no tiene resuelta la Hidrodinámica'])
+				else
+					claseSolucion = class(thisSimulacion.Resultados.Hidrodinamica);
+					solucion = thisSimulacion.Resultados.Hidrodinamica.Solucion;
+					% str = ['solucion = thisSimulacion.Resultados.Hidrodinamica.', claseSolucion, '.Solucion'];
+					% eval(str)
+
+					evolTemporal = length(solucion(1,:));
+					malla = getMalla(thisSimulacion);
+					coordenadasEta2DX = malla.coordenadasEta2DX;
+					[xDentro yDentro] = find(~isnan(coordenadasEta2DX'));
+					[mFilas nCol] = size(coordenadasEta2DX);
+
+					if evolTemporal ~= 1
+
+						solucionEta2D = NaN(mFilas, nCol, evolTemporal);
+						solucionU2D = solucionEta2D;
+						solucionV2D = solucionEta2D;
+						
+						barraEspera = waitbar(0,'Transformando solución a 2D...');
+
+						for iTiempo = 1:evolTemporal
+						
+							waitbar(iTiempo/evolTemporal)
+
+							[eta u v] = getEtaUV(thisSimulacion, solucion(:,iTiempo));
+
+							for iSol = 1:length(xDentro) 
+								solucionEta2D(yDentro(iSol), xDentro(iSol), iTiempo) = eta(iSol);
+								solucionU2D(yDentro(iSol), xDentro(iSol), iTiempo) = u(iSol);
+								solucionV2D(yDentro(iSol), xDentro(iSol), iTiempo) = v(iSol);
+							end %for
+						end %for
+
+						close(barraEspera)
+
+					else
+						solucionEta2D = NaN(mFilas, nCol);
+						solucionU2D = solucionEta2D;
+						solucionV2D = solucionEta2D;
+
+						barraEspera = waitbar(0,'Transformando solución a 2D...');
+
+						[eta u v] = getEtaUV(thisSimulacion, solucion);
+
+						for iSol = 1:length(xDentro) 
+
+							waitbar(iSol/length(xDentro))
+
+							solucionEta2D(yDentro(iSol), xDentro(iSol)) = eta(iSol);
+							solucionU2D(yDentro(iSol), xDentro(iSol)) = u(iSol);
+							solucionV2D(yDentro(iSol), xDentro(iSol)) = v(iSol);
+						end %for
+
+						close(barraEspera)					
+			
+					end %if
+
+					solucion2D.solucionEta2D = solucionEta2D;
+					solucion2D.solucionU2D = solucionU2D;
+					solucion2D.solucionV2D = solucionV2D;
+					thisSimulacion.Resultados.Hidrodinamica.Solucion2D = solucion2D;
+					% str = ['thisSimulacion.Resultados.Hidrodinamica.', claseSolucion, '.Solucion2D = solucion2D'];
+					% eval(str)				
+
+				end %if
+			elseif strcmpi(cualSolucion, 'transporteod')
+				if isempty(thisSimulacion.Resultados.TransporteOD) 
+					error(['La simulacion aún no tiene resuelto el TransporteOD'])
+				else
+					% solucion
+					% str = ['solucion = simulacion.Resultados.Hidrodinamica.', claseSolucion];
+					% eval(str)
+				end
+			else 
+				error(['La solucion especificada no existe en la simulación'])
+			end
+		end % function solucion2D
 	end%methods 
 end%classdef 
-
 
 %%%%%%%%%%%%%%%%%%%%%%%% THRASH
 

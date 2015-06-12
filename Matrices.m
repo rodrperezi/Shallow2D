@@ -9,7 +9,18 @@ classdef Matrices < hgsetget
 	% 
 	% Para mayor información con respecto al significado de cada término
 	% ver Shimizu e Imberger (2008).
-	%
+	% 
+	% Construcción: 
+	% 
+	% Las matrices para una simulación se construyen como 
+	% 
+	% 	thisMatrices = Matrices(simulacion, tipo)
+	% 
+	% Tipo es un string que caracteriza 
+	% el tipo de matriz y su construcción. Puede ser 'dimensional', 
+	% 'adimensional', 'modosLibres' o vacío. El constructor de la clase
+	% asigna inmediatamente las matrices a la simulacion.
+	% 
 	% >> properties(Matrices)
 	%
 	%	Properties for class Matrices:
@@ -22,17 +33,8 @@ classdef Matrices < hgsetget
 	%	    Tipo
 	% 
 	% Tiempo es un vector de tiempo que existe solo si el forzante
-	% es impermanente. Tipo es un string que caracteriza 
-	% el tipo de matriz y su construcción. Puede ser 'dimensional', 
-	% 'adimensional', 'modosLibres' o vacío.
-	% 
-	% Las matrices se construyen para una simulación como 
-	% 
-	% thisMatrices = Matrices(simulacion, tipo)
-	% 
-	% El constructor asigna inmediatamente las matrices a la simulacion.
-	% 
-
+	% es impermanente, o sea, si es que tiene especificado un vector
+	% de tiempo.
 
 	properties 
 
@@ -84,7 +86,7 @@ classdef Matrices < hgsetget
 
 		function thisMatrices = matricesMK(thisMatrices, simulacion)
 					
-			cuerpo = getCuerpo(simulacion);
+			cuerpo = getCuerpo(simulacion); 
 			malla = getMalla(cuerpo);
 			batimetria = getBatimetria(cuerpo);
 			parametros = getParametros(cuerpo);

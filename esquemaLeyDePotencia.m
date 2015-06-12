@@ -51,7 +51,7 @@
 		Fo = kl*CSat*ones(Neta,1) + Fsed(S,kt,Ck) - dFsed(S,kt,Ck).*Ck; %kg/m2/s
 		F1 = dFsed(S,kt,Ck) - kl; %m/s
 		bvf = Fo*dx*dy; %kg/s
-		aP = aE + aW + aN + aS- F1*dx*dy + Fe - Fw + Fn - Fs;
+		aP = aE + aW + aN + aS - F1*dx*dy + Fe - Fw + Fn - Fs;
 		generaMatricesVolumenesFinitos
 		% keyboard
 		C_VF = G\bvf;

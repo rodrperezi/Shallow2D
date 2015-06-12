@@ -1,15 +1,49 @@
 classdef AnalisisModal < Hidrodinamica
 
-	% ANALISISMODAL es el motor que procesa la información 
-	% utilizando la teoría del análisis modal
+	% HIDRODINAMICA -> ANALISISMODAL es uno de los motores 
+	% hidrodinámicos que resuelve el problema del flujo
+	% utilizando la teoría del análisis modal (Shimizu e Imberger, 2008)
+	% 
+	% Construcción:
+	% 
+	% El constructor de la clase requiere un objeto de clase SIMULACION
+	% y un string que especifica el régimen temporal.
+	% 
+	% 	thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal) 
+	% 
+	% Dentro de las opciones disponibles para el régimen temporal 
+	% existen 'permanente', 'impermanente' o 'modosLibres'.
+	% Este último pretende entregar los modos de oscilación libres
+	% sin disipación de energía. Sin embargo, la función eig() de
+	% Matlab no permite resolver el problema adecuadamente. En caso 
+	% de buscar los modos de oscilación libres se recomienda
+	% resolver un problema con disipación de energía, es decir, 	
+	% especificando un FORZANTE en la simulación y a partir de 
+	% estos modos y la función eigs() resolver los modos libres. 
+	% El problema lo tiene eig().
+	% 
+	% Propiedades:
+	%
+	% >> properties(AnalisisModal)
+	%
+	%	Properties for class AnalisisModal:
+	%
+	%	    VyVPropios
+	%	    tiempoComputo
+	%	    RegimenTemporal
+	%	    Solucion
+	%	    Solucion2D
+	%	    Tiempo
+	%	    Tipo
+
 
 	properties 
 
-%		Tipo
-%		RegimenTemporal
-%		Solucion
-%		Solucion2D	
-%		Tiempo	
+	%	Tipo
+	%	RegimenTemporal
+	%	Solucion
+	%	Solucion2D	
+	%	Tiempo	
 		VyVPropios
 		tiempoComputo		
 	
@@ -18,18 +52,20 @@ classdef AnalisisModal < Hidrodinamica
 	methods
 
 		function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
+		% function thisAnalisisModal = AnalisisModal(simulacion, regimenTemporal)
 		% Constructor del objeto AnalisisModal
 
 			if nargin == 0
 				thisAnalisisModal;
 			else
-
+				tic
 				thisAnalisisModal.Tipo = 'AnalisisModal';
 				thisAnalisisModal.RegimenTemporal = regimenTemporal;
 				thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
 				if(~strcmpi(regimenTemporal, 'modoslibres'))
 					thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
 				end
+				thisAnalisisModal.tiempoComputo = toc;
 				% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
 				% thisAnalisisModal.Solucion2D = Solucion2D;
 %				res = Resultados(thisAnalisisModal);
@@ -38,9 +74,19 @@ classdef AnalisisModal < Hidrodinamica
 		end %function AnalisisModal
 
 		function thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion)
-			% function valoresVectoresPropios = calculaVyVPropios(matrices)
-			% Calcula valores y vectores propios por la derecha y por la 
-			% izquierda. Para mayor información en la definición del problema
+			% function thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion)
+			% Calcula valores y vectores propios por la derecha resolviendo
+			% el problema
+			% 
+			% 	[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
+			% 
+			% A partir de este resultado obtiene los valores y vectores 
+			% propios por la izquierda 
+			% 
+			% 	valoresIzquierda = conj(valoresDerecha);
+			% 	vectoresIzquierda = vectoresDerecha;
+			% 
+			% Para mayor información en la definición del problema
 			% ver Shimizu e Imberger (2008).
 
 				[M, K, C] = getMatrices(simulacion);
@@ -48,7 +94,7 @@ classdef AnalisisModal < Hidrodinamica
 			% Resuelvo problema por la derecha. 
 				[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
 				valoresDerecha = diag(valoresDerecha);
-			% keyboard
+
 			% Corto decimales que sean menores que la precision del programa
 
 				corta = 1e-15;
@@ -116,7 +162,7 @@ classdef AnalisisModal < Hidrodinamica
 				VyVPropios.ProblemaDerecha = ProblemaDerecha;
 				VyVPropios.ProblemaIzquierda = ProblemaIzquierda;
 				thisAnalisisModal.VyVPropios = VyVPropios;
-				% keyboard
+
 		end %function calculaVyVPropios
 
 		function thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion)
@@ -210,7 +256,7 @@ classdef AnalisisModal < Hidrodinamica
 %						sPlot(2) = subplot(2,2,2);
 %						graficaModo(simulacion, solModosOmegaCero)
 %						sPlot(3) = subplot(2,2,3);
-%						graficaModo(simulacion, solAcumulada)
+%			sdfsdsdffsdfaf			graficaModo(simulacion, solAcumulada)
 
 						% keyboard					
 						thisAnalisisModal.Solucion = solAcumulada;
