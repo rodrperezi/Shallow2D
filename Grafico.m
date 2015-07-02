@@ -75,8 +75,7 @@ classdef Grafico < hgsetget
 			y = malla.coordenadasEta2DY;
 			handleQuiver = quiver(x,y,uMatriz,vMatriz, 'color', 0*[1 1 1]);
 
-
-		end
+		end % function graficaVelocidad
 
 		function thisGrafico = graficaHidrodinamica(thisGrafico, simulacion, varargin)
 			
