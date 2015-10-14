@@ -39,7 +39,10 @@ classdef Grafico < hgsetget
 			graficaBorde(thisGrafico, varargin{:});
 			hold on
 
-			geoVieja = getGeometria(varargin{:});
+			% GENERALIZAR ESTO PARA CUALQUIER GEOMETRIA
+
+			% geoVieja = getGeometria(varargin{:});
+			geoVieja = varargin{:};
 			R = geoVieja.radioR;
 
 			handle.scatterEta = scatter(coordenadasEta(:,1)/R, coordenadasEta(:,2)/R, areaMarker, 's', 'markeredgecolor', 'k', 'markerfacecolor', 0*[1 1 1]);
@@ -57,8 +60,13 @@ classdef Grafico < hgsetget
 		end %function graficaMalla
 
 		function thisGrafico = graficaBorde(thisGrafico, objeto)
-			
-			geoVieja = getGeometria(objeto);
+		
+			% if ~strcmpi(class(objeto), 'Geometria')
+				% geoVieja = getGeometria(objeto);
+			% else
+				geoVieja = objeto;				
+			% end
+
 			R = geoVieja.radioR;
 			borde = getBorde(objeto);
 			% handle.plot = plot(borde.coordenadasXY(:,1), borde.coordenadasXY(:,2),'k', 'linewidth', 1);

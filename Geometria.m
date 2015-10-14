@@ -51,6 +51,13 @@ classdef Geometria < hgsetget
 				end %for
 			end %if
         	 end %function Geometria
+
+
+		function malla = getMalla(thisGeometria)
+			malla = thisGeometria.Malla;
+		end
+
+
 	end %methods
 end %classdef
 

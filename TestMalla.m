@@ -82,12 +82,18 @@ close all
 %	keyboard
 %%%%%%%%%%% Lista Construcción de borde arbitrario %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-	geoTest = Geometria();
-	geoTest.Borde = bordeTest;
-	geoTest.deltaX = 0.1*(max(coordenadasXY(:,1)) - min(coordenadasXY(:,1)));
-	geoTest.deltaY = geoTest.deltaX;
-	geoTest.Malla = Malla(geoTest, 'staggered');
-	graficaMalla(geoTest)
+	R = 1000;
+	H = 10;
+	centroMasa = [0 0];
+	
+	kranPrueba = GeoKranenburgNew(GeoKranenburgNew(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa, 'fracDeltaX', 1/5);
+	% geoTest = Geometria();
+	% geoTest.Borde = bordeTest;
+	% deltaX = 0.1*(max(coordenadasXY(:,1)) - min(coordenadasXY(:,1)));
+	% deltaY = deltaX;
+	% geoTest.Malla = Malla(geoTest, 'staggered');
+	% geoTest.Malla = Staggered(Malla(), geoTest, deltaX, deltaY);
+	graficaMalla(Grafico(), kranPrueba)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusión: La malla está construida de manera correcta.
 % Para mayor información sobre la programación, ver Malla.m
