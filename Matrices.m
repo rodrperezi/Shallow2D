@@ -280,6 +280,7 @@ classdef Matrices < hgsetget
 				% keyboard
 				% forzanteExterno(Neta + 1: New + Neta, :) = repmat(queSeAsignaX, New, 1); % DireccionX			
 				% forzanteExterno(New + Neta + 1: New + Neta + Nns, :) = repmat(queSeAsignaY, Nns, 1); % DireccionY
+				% keyboard
 				forzanteExterno(Neta + 1: New + Neta, :) = queSeAsignaX; % DireccionX			
 				forzanteExterno(New + Neta + 1: New + Neta + Nns, :) = queSeAsignaY; % DireccionY
 
@@ -397,6 +398,8 @@ classdef Matrices < hgsetget
 				case 'serieAcelExperimento'
 					coefFriccionLineal = listaForzantes{1}.CoeficienteFriccion;
 				case 'serieAcelExperimentoSeno'
+					coefFriccionLineal = listaForzantes{1}.CoeficienteFriccion;
+				case 'serieVientoUniforme'
 					coefFriccionLineal = listaForzantes{1}.CoeficienteFriccion;
 				otherwise 
 					error(['No se ha definido un coeficiente de fricción para ', tipoForzante])
