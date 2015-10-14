@@ -15,10 +15,30 @@ centroMasa = [0, 0];
 
 % CONSTRUCCION MODELO HIDRODINAMICA
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-kranPrueba = GeoKranenburgNew(GeoKranenburgNew(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa, 'fracDeltaX', 1/20);
+kranPrueba = GeoKranenburgNew(GeoKranenburgNew(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa, 'fracDeltaX', 1/10);
 cuerpoPrueba = addGeometria(Cuerpo(), kranPrueba);
 simCN = Simulacion(Simulacion(), cuerpoPrueba);
-simCN = addForzante(simAM, VientoUniforme(Forzante(), 'uAsterisco', 1e-3, 'anguloDireccion', pi/2));
-simCN = addMatrices(simAM, Matrices(simAM));
-simCN = addResultados(simAM, AnalisisModal(simAM, 'permanente'));
+simCN = addForzante(simCN, VientoUniforme(Forzante(), 'uAsterisco', 1e-3, 'anguloDireccion', pi/2));
+simCN = addMatrices(simCN, Matrices(simCN));
+simCN = addResultados(simCN, CrankNicolson(simCN));
+
+%%%%%%%%%%%%%%%%%%%%%%
+% AGREGAR VOLUMENES FINITOS
+1
+% Creo masa
+OD = OxigenoDisuelto();
+concIniciales = 0.2;
+cSat = 8.82e-3;
+nEta = getNumeroNodos(simCN);
+objetoVF = VolumenesFinitos(VolumenesFinitos(), simCN,'RegimenTemporal', ...
+	   'impermanente', 'Masa', OD, 'Flujos', 'adveccionVerticales', ...
+ 	   'ConcentracionInicial', concIniciales*cSat*ones(nEta,1));
+
+
+
+
+
+
+
+
 

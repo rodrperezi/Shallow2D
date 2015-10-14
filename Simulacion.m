@@ -55,7 +55,7 @@ classdef Simulacion < hgsetget
 
 		Nombre
 		Cuerpo
-		ListaForzantes
+		ListaForzantes %Hidrodinamicos
 		Matrices
 		Resultados
 

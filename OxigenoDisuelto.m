@@ -200,12 +200,6 @@ classdef OxigenoDisuelto < Masa
 			flujosVert = thisOxigenoDisuelto.FlujosVerticales;
 
 		end % getFlujosVerticales
-
-
-
-
-
-
 	end %methods
 end %classdef
 

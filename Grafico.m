@@ -64,10 +64,11 @@ classdef Grafico < hgsetget
 			% if ~strcmpi(class(objeto), 'Geometria')
 				% geoVieja = getGeometria(objeto);
 			% else
-				geoVieja = objeto;				
+			geo = getGeometria(objeto);
 			% end
 
-			R = geoVieja.radioR;
+			% R = geoVieja.radioR;
+			R = geo.radioR;
 			borde = getBorde(objeto);
 			% handle.plot = plot(borde.coordenadasXY(:,1), borde.coordenadasXY(:,2),'k', 'linewidth', 1);
 			handle.plot = plot(borde.coordenadasXY(:,1)/R, borde.coordenadasXY(:,2)/R,'k', 'linewidth', 1);
@@ -362,7 +363,7 @@ classdef Grafico < hgsetget
 						barraColor = colorbar;
 						caxis([etaMin etaMax])
 						xlabel(barraColor, '$\eta [m]$', 'interpreter', 'latex')
-						asignaAxisLim(thisGrafico, simulacion);
+						% asignaAxisLim(thisGrafico, simulacion);
 						axis equal
 						xlabel('$x [m]$', 'interpreter', 'latex')	
 						ylabel('$y [m]$', 'interpreter', 'latex')	
