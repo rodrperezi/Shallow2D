@@ -50,6 +50,10 @@ classdef CrankNicolson < Hidrodinamica
 		function thisCrankNicolson = CrankNicolson(simulacion)
 		% function thisCrankNicolson = CrankNicolson(simulacion)	
 		% Constructor de la clase
+		% 
+		% Hacer que al llamar al constructor, se pueda especificar
+		% el tiempo inicial, tiempo final y el deltaT. Si especifico
+		% el tiempo inicial, entonces debo especificar la condición inicial
 
 			if nargin == 0
 				thisCrankNicolson;
@@ -58,8 +62,6 @@ classdef CrankNicolson < Hidrodinamica
 				thisCrankNicolson.Tipo = 'CrankNicolson';
 				thisCrankNicolson.RegimenTemporal = 'impermanente';
 				thisCrankNicolson = crankNicolson(thisCrankNicolson, simulacion);
-				% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisCrankNicolson.Solucion);
-				% thisCrankNicolson.Solucion2D = Solucion2D;
 				thisCrankNicolson.tiempoComputo = toc;
 			end %if
 		end %CrankNicolson
@@ -80,12 +82,39 @@ classdef CrankNicolson < Hidrodinamica
 
 					% Si el forzante es constante en el tiempo. 
 					% Entonces creo un vector de tiempo arbitrario
+					% basado en una escala de tiempo caracteristica del 
+					% problema. Se considera el periodo de la onda mas 
+					% larga T = 2L/sqrt(g*mean(ho))
+					% keyboard
 
-					tFinal = 20000; %segundos
-					deltaT = 20; %segundos
-					tiempoCalculo = 0:deltaT:tFinal;
+					malla = getMalla(simulacion);
+					Lx = max(malla.coordenadasU(:,1)) - ... 	
+					     min(malla.coordenadasU(:,1));
+					Ly = max(malla.coordenadasV(:,2)) - ... 	
+					     min(malla.coordenadasV(:,2));
+					L = max([Lx Ly]);
+
+					par = getParametros(simulacion);
+					g = par.aceleracionGravedad;
+		
+					bat = getBatimetria(simulacion);
+					hom = mean(bat.hoNodosEta);
+
+					TCarac = 2*L/sqrt(g*hom);
+					tiempoCalculo = (0:0.05:65)*TCarac; 
+					% Este vector de tiempo ha resuelto 
+					% satisfactoriamente casos para Wed < 3700
+					% Se probó con dt = 0.01 y no hubo cambios
+					% importantes en la solución. Sin embargo
+					% lo ideal sería definir el tiempo 
+					% caracteristico del problema en función 
+					% del numero de Wedderburn, ya que incluye
+					% el efecto del viento. Revisar			
+				
+					deltaT = abs(tiempoCalculo(1)-tiempoCalculo(2));
 					nTiempoCalculo = length(tiempoCalculo);
 					forzanteExterno = repmat(forzanteExterno, 1, nTiempoCalculo);
+					% keyboard
 
 				else
 
@@ -99,18 +128,19 @@ classdef CrankNicolson < Hidrodinamica
 				end
 
 
-				barraEspera = waitbar(0,'Resolviendo hidrodinámica con Crank Nicolson...');
+				% barraEspera = waitbar(0,'Resolviendo hidrodinámica con Crank Nicolson...');
 				SOLri = sparse(length(forzanteExterno(:,1)),length(tiempoCalculo));
 
 				for iTiempo = 2:nTiempoCalculo
-					waitbar(iTiempo/nTiempoCalculo)
+					% waitbar(iTiempo/nTiempoCalculo)
+					% iTiempo/nTiempoCalculo
 					fExtTmUno = forzanteExterno(:, iTiempo-1);
 					fExtT = forzanteExterno(:, iTiempo);
 					fExternoProm = 0.5*(fExtTmUno + fExtT); 
 					SOLri(:,iTiempo) = (M/deltaT - 0.5*i*(K + C))\((0.5*i*(K + C) + M/deltaT)*SOLri(:,iTiempo-1) + fExternoProm); 
 				end
 
-				close(barraEspera)
+				% close(barraEspera)
 
 				thisCrankNicolson.Solucion = SOLri;
 				thisCrankNicolson.Tiempo = tiempoCalculo;

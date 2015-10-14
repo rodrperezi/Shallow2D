@@ -12,6 +12,7 @@ classdef Staggered < Malla
 		coordenadasV
 		matrizID
 		matrizIDeta
+		matrizIDetaC 
 		matrizIDwe
 		matrizIDns
 		numeroBordesIzquierdo
@@ -47,7 +48,7 @@ classdef Staggered < Malla
 			% [deltaX, deltaY] = getDeltaX(geometria);
 			% 
 			% Los nodos Eta deben quedar alejados del borde, para que los nodos de 
-			% de velocidad queden justo en el borde. Por eso agrando el dominion en 0.5 deltaX
+			% de velocidad queden justo en el borde. Por eso agrando el dominio en 0.5 deltaX
 			% de esa forma me aseguro que todo el borde está dentro del dominio
 			% y que los nodos Eta que queden dentro del borde, queden alejados
 			% del borde (hacia el interior) una distancia de 0.5 dx. El vector
@@ -67,7 +68,7 @@ classdef Staggered < Malla
 			%    250   190   130    70    10   -50  -110
 			% 
 			% keyboard 
-			% Busco que puntos de Eta están contenidos en el borde					
+			% Busco que puntos de Eta están contenidos en el borde				
 			matrizIndicesEta = puntosDentroBorde(borde, dominioEtaX, dominioEtaY);
 			% 
 			% 
@@ -595,6 +596,14 @@ classdef Staggered < Malla
 				matrizIntercalada = [matrizIntercalada; matriz(iFilas,:); filaIntercalar];
 			end
 		end % function intercalaFilasNulas
+
+%		function malla = getMalla(staggered)
+%				
+%			malla = simulacion.Cuerpo.Geometria.Malla;			
+%					
+%		end %function getMalla
+
+
 	end %methods
 end % classdef
 

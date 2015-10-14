@@ -1,93 +1,190 @@
-classdef VolumenesFinitos < TransporteOD
+classdef VolumenesFinitos < Transporte
 
 	properties
 
-		tiempoComputo	
+		Flujos
+		Masa
+		tiempoComputo
+		ConcentracionInicial
+		
 
 	end %properties
 
 	methods
 		
-		function thisVolumenesFinitos = VolumenesFinitos(simulacion)
+		function thisVolumenesFinitos = VolumenesFinitos(thisVolumenesFinitos, simulacion, varargin)
 
 			if nargin == 0
 				thisVolumenesFinitos;
 			else 
-			
-				if isempty(simulacion.Resultados) 
-				% if isempty(simulacion.Resultados) || isempty(simulacion.Resultados.Hidrodinamica)
-						
-					error(['La simulacion aún no tiene resuelta la Hidrodinámica'])
+				thisVolumenesFinitos = asignaPropiedad(thisVolumenesFinitos, varargin{:});
+
+				regTemporal = thisVolumenesFinitos.RegimenTemporal;
+				masa = thisVolumenesFinitos.Masa;
+				flujos = thisVolumenesFinitos.Flujos;
+				condInicial = thisVolumenesFinitos.ConcentracionInicial;
 				
-				else
-					tic
-					%%%% Aqui se aplica la resolucion
-					solHidro = getHidrodinamica(simulacion);
-			
-					% Veo el regimenTemporal de la solucion
-					% si es permanente, entonces resuelvo
-					% el transporte de OD permanente. Si es
-					% impermanente, resuelvo el transporte
-					% impermanente.					
+				if(~isempty(regTemporal) && ~isempty(masa) && ~isempty(flujos))
+					
+					if strcmpi(regTemporal, 'impermanente') && ~isempty(condInicial)
 
-					if strcmpi(solHidro.RegimenTemporal, 'permanente')
-						% resuelve VF permanente
-						% Los volumenes finitos para el transporte de OD	
-						% con flujos verticales entre agua y sedimentos 
-						% solo pueden ser resueltos para el caso en que 
-						% el forzante es un viento uniforme, puesto que 
-						% la parametrizacion de los flujos utiliza el 
-						% parametro uAsterisco. 
+						thisVolumenesFinitos = volumenesFinitos(thisVolumenesFinitos, ...
+						simulacion);			
 
-					elseif strcmpi(solHidro.RegimenTemporal, 'impermanente')
-						% resuelve VF impermanente
-						% ARREGLAR LO DEL UASTERISCO EN LOS 
-						% COEFICIENTES DE DISPERSION
+					elseif strcmpi(regTemporal, 'permanente')
+
+						thisVolumenesFinitos = volumenesFinitos(thisVolumenesFinitos, ...
+						simulacion);			
+
+					end %if
+
+					simulacion = addResultados(simulacion, thisVolumenesFinitos);
 
 
-						% For que itera sonbre el tiempo
-	
-						tiempo = solHidro.Tiempo;
-
-						for iT = 1: length(tiempo)
-							% actualizar coeficientes de dispersion
-							thisVolumenesFinitos = coeficientesDispersion(thisVolumenesFinitos, simulacion, solHidro.Solucion(:,iT));
-							% actualizar numero de Peclet o resolver esquema ley de potencia
-							thisVolumenesFinitos = leyDePotencia(thisVolumenesFinitos, simulacion, solHidro.Solucion(:,iT));
-							% itera los volumenes finitos
-							% thisVolumenesFinitos = iteraVolFinitos();
-
-						end %for
-
-					else
-						error(['Regimen temporal ', solHidro.RegimenTemporal ,' no definido'])
-					end
-					%%%%
-					thisVolumenesFinitos.tiempoComputo = toc;
 				end %if
 			end %if
+
 		end %VolumenesFinitos
 
-		function thisVolumenesFinitos = coeficientesDispersion(thisVolumenesFinitos, simulacion, solucion)
-			% falta definir el uasterisco
+		function thisVolumenesFinitos = volumenesFinitos(thisVolumenesFinitos, simulacion)
+
+			if isempty(simulacion.Resultados) 
+						
+				error(['La simulacion aún no tiene resuelta la Hidrodinámica'])
+				
+			end
+			
+			tic
+			%%%% Aqui se aplica la resolucion
+
+			regTemporal = thisVolumenesFinitos.RegimenTemporal;
+			% flujos = thisVolumenesFinitos.Flujos;
+			% masa = thisVolumenesFinitos.Masa;
+			
+			if strcmpi(regTemporal, 'permanente')
+			
+				solHidro = getHidrodinamica(simulacion);
+				
+				if strcmpi(solHidro.RegimenTemporal, 'permanente')
+
+					sol = solHidro.Solucion;
+
+				elseif strcmpi(solHidro.RegimenTemporal, 'impermanente')
+			
+					% asumo que si quiero ver 
+					% la solucion en el regimen permanente
+					% de una simulacion impermanente entonces
+					% la ultima columna de la hidrodinamica
+					%  es el regimen permanente
+
+					sol = solHidro.Solucion(:,end);
+
+				end
+
+				% Defino coeficientes de transporte
+				% keyboard
+				coefTransEta = coefTransporte(thisVolumenesFinitos, simulacion, sol);
+
+				% Itero volumenes finitos hasta alcanzar estado de equilibrio
+				thisVolumenesFinitos.Solucion = iteraVolFinitos(thisVolumenesFinitos, simulacion, ...
+						        sol, coefTransEta);	
+
+			elseif strcmpi(regTemporal, 'impermanente')
+
+				solHidro = getHidrodinamica(simulacion);
+				
+				if strcmpi(solHidro.RegimenTemporal, 'impermanente')
+
+					nEta = getNumeroNodos(simulacion);
+					sol = solHidro.Solucion;
+					solVF = sparse(zeros(size(sol(1:nEta,:))));
+					tiempo = solHidro.Tiempo;
+					deltaT = tiempo(2) - tiempo(1); %Asumo deltaT uniforme
+
+
+					etaInicial = sol(1:nEta,1);
+					concInicial = thisVolumenesFinitos.ConcentracionInicial;
+
+					if length(etaInicial) ~= length(concInicial)
+
+						error('La concentracion inicial debe ser un vector del tamaño de eta')
+
+					end
+
+					variaTempo.eta0 = etaInicial;
+					variaTempo.cp0 = concInicial;
+					variaTempo.deltaT = deltaT;
+					solVF(:,1) = concInicial;
+
+					barraEspera = waitbar(0, 'Resolviendo volumenes finitos');
+					
+					for iT = 2:length(tiempo)
+				
+						waitbar(iT/length(tiempo))
+
+						% Defino coeficientes de transporte
+						% keyboard
+						coefTransEta = coefTransporte(thisVolumenesFinitos, simulacion, sol(:,iT));
+
+						% Itero volumenes finitos hasta alcanzar estado de equilibrio
+						solVF(:,iT) = iteraVolFinitos(thisVolumenesFinitos, simulacion, ...
+									sol(:,iT), coefTransEta, variaTempo);	
+
+						variaTempo.eta0 = sol(1:nEta,iT);
+						variaTempo.cp0 = solVF(:,iT);
+
+					end
+
+					close(barraEspera)
+
+					thisVolumenesFinitos.Solucion = solVF;
+					thisVolumenesFinitos.Tiempo = tiempo;
+
+				elseif strcmpi(solHidro.RegimenTemporal, 'permanente')
+			
+					error(['No puedes resolver volumenes finitos impermanente ' ...
+					      'si el regimen temporal de la hidrodinamica es permanente'])
+
+				end %if
+
+			end %if
+
+			thisVolumenesFinitos.tiempoComputo = toc;
+
+		end %function volumenesFinitos
+
+		function coefTransEta = coefTransporte(thisVolumenesFinitos, simulacion, solucion)
+
+			coefDispersion = coeficientesDispersion(thisVolumenesFinitos, simulacion, solucion);
+			coefTransEta = leyDePotencia(thisVolumenesFinitos, simulacion, coefDispersion);
+			% keyboard
+
+		end %function coefTransporte
+	
+		function coefDispersion = coeficientesDispersion(thisVolumenesFinitos, simulacion, solucion)
+			% keyboard
 			% Extraigo parametros para calculo de los coeficientes
 			parametros = getParametros(simulacion);
 			malla = getMalla(simulacion);	
 			bat = getBatimetria(simulacion);
+			forza = getForzante(simulacion);
+			coefFriccion = forza.coeficienteFriccion;
+
+			masa = thisVolumenesFinitos.Masa;
+			coefDifusion = masa.coefDifusion;
 		
-			howe = bat.hoNodosU;
-			hons = bat.hoNodosV;
+			hoWE = bat.hoNodosU;
+			hoNS = bat.hoNodosV;
 
-			eL = parametros.coefLong;
-			eT = parametros.coefTrans;
+			eL = parametros.dispLong;
+			eT = parametros.dispTrans;
 
-			[eta, u, v] = getEtaUV(simulacion, solucion);
 			[Neta Nu Nv] = getNumeroNodos(simulacion);
 
 			IDwe = malla.matrizIDwe;
 			IDns = malla.matrizIDns;
-			IDuwe = zeros(nU,2);
-			IDvns = zeros(nV,2);
+			IDuwe = zeros(Nu,2);
+			IDvns = zeros(Nv,2);
 
 			nBDe = malla.numeroBordesDerecho;
 			nBIz = malla.numeroBordesIzquierdo;
@@ -109,91 +206,103 @@ classdef VolumenesFinitos < TransporteOD
 			% superficie libre hacia los nodos de velocidad
 			% para calcular los coeficientes de dispersion
 
-			Vuaux = zeros(Nu,1);
-			Uvaux = zeros(Nv,1);
-			etawe = Vuaux;
-			etans = Uvaux;
-			uaux = sparse(zeros(Nu,1));
-			vaux = sparse(zeros(Nv,1));
+			flujos = thisVolumenesFinitos.Flujos;
 
-			ku = 1;
-			kv = 1;
+			% La idea es conocer las velocidades u en los nodos v 
+			% y viceversa
 
-			% for para promediar velocidades v para los nodos u
-			for iNU = 1:Nu
+			[nEta nU nV] = getNumeroNodos(simulacion);
+			[nBU nBV] = getNodosBorde(simulacion);
+			coordenadasEta = malla.coordenadasEta;
+			coordenadasU = malla.coordenadasU;
+			coordenadasV = malla.coordenadasV;
+			nUNew = nU - length(nBU);
+			nVNew = nV - length(nBV);
 
-				% busca el nodo en la matriz de oeste este
-				[filaid colid] = find(iNU == IDwe);
-				filaid = sort(filaid);
-	
-				if(sum(iNU == IDwe(nBIz,1)) ~= 0);	
-					% Si el nodo es borde izquierdo
-					IDuwe(iNU,2) = filaid;
-				elseif(sum(iNU == IDwe(nBDe,2)) ~= 0);	
-					% Si el nodo es borde derecho
-					IDuwe(iNU,1) = filaid;
-				else
-					% Si el nodo no es borde
-					IDuwe(iNU,:) = filaid'; %Nodo eta W, E
-					% velocidad "v" promedio en nodo "u" es 
-					% el promedio entre las velocidades "v"
-					% que han sido promediadas a lso nodos eta
-					% almacenadas en el vector "v"
-					Vuaux(iNU) = mean(v(IDuwe(iNU,:)));
-					etawe(iNU) = mean(eta(IDuwe(iNU,:)));
-				end %if
+			% Elimino coordenadas de los nodos de velocidad
+			% que son bordes
+			% coordBordeU = coordenadasU(nBU,:);
+			% coordBordeV = coordenadasV(nBV,:);
+			% coordenadasU(nBU,:) = [];
+			% coordenadasV(nBV,:) = [];
+			% uBorde = zeros(length(coordBordeU(:,1)), 1);
+			% vBorde = zeros(length(coordBordeV(:,1)), 1);
+			
+			eta = full(solucion(1: nEta));
 
-				% almaceno velocidades u de los nodos
-				if(sum(iNU == [IDwe(nBIz,1);IDwe(nBDe,2)])==0);
-				       	uaux(iNU) = solucion(Neta + ku); 
-				       	ku = ku+1;
-				end %if
-			end %for
+			noBordeU = 1:nU;
+			noBordeU(nBU) = [];
+			noBordeV = 1:nV;
+			noBordeV(nBV) = [];
 
-			% for para promediar velocidades u para los nodos v
-			for iNV = 1:Nv
+			velU = zeros(nU, 1);
+			velV = zeros(nV, 1);
+			velU(noBordeU) = full(solucion(nEta + 1: nEta + nUNew));
+			velV(noBordeV) = full(solucion(nEta + nUNew + 1: end));
 
-				[filaid colid] = find(iNV == IDns);
-				filaid = sort(filaid);
-	
-				if(sum(iNV == IDns(nBSu,1))~=0);	
-					IDvns(iNV,2) = filaid;
-				elseif(sum(iNV == IDns(nBIn,2))~=0);	
-					IDvns(iNV,1) = filaid;
-				else
-					IDvns(iNV,:) = filaid'; %Nodo eta N, S
-					Uvaux(iNV) = mean(u(IDvns(iNV,:)));
-					etans(iNV) = mean(eta(IDvns(iNV,:)));
-				end %if
+			% Construyo interpoladores
+			interpEta = TriScatteredInterp(coordenadasEta(:,1), coordenadasEta(:,2), ...
+				  eta); % Interpolador eta 
+			interpU = TriScatteredInterp(coordenadasU(:,1), coordenadasU(:,2), velU); % Interpolador u
+			interpV = TriScatteredInterp(coordenadasV(:,1), coordenadasV(:,2), velV); % Interpolador V
 
-				if(sum(iNV == [IDns(nBSu,1);IDns(nBIn,2)])==0);
-					vaux(iNV) = solucion(Neta + kv + Nu - length([IDwe(nBIz,1);IDwe(nBDe,2)]));
-				       	kv= kv+1;
-				end %if
-		      
-			end %for
+			% Interpolo velocidades u a los nodos v y viceversa
+			uInterpNodoV = interpU(coordenadasV(:,1), coordenadasV(:,2));
+			uInterpNodoV(isnan(uInterpNodoV)) = 0;
+			vInterpNodoU = interpV(coordenadasU(:,1), coordenadasU(:,2));
+			vInterpNodoU(isnan(vInterpNodoU)) = 0;
+				
+			% Calculo modulo de velocidades en nodos u y v respectivamente
+			modVelWE = sqrt(velU.^2 + vInterpNodoU.^2);	
+			modVelNS = sqrt(velV.^2 + uInterpNodoV.^2);	
+			uAstWE = sqrt(coefFriccion*modVelWE);
+			uAstNS = sqrt(coefFriccion*modVelNS);
+ 
+			% Interpolo eta a los nodos de velocidad
+			etaWE = interpEta(coordenadasU(:,1), coordenadasU(:,2)); 
+			etaNS = interpEta(coordenadasV(:,1), coordenadasV(:,2));
+			etaWE(isnan(etaWE)) = 0;
+			etaNS(isnan(etaNS)) = 0;
+% keyboard
+			thetaWE = atan2(vInterpNodoU, velU);
+			f1 = find(thetaWE <= 0);
+			thetaWE(f1) = thetaWE(f1) + 2*pi;
 
-			thetawe = atan2(Vuaux, uaux);
-			f1 = find(thetawe <= 0);
-			thetawe(f1) = thetawe(f1) + 2*pi;
+			thetaNS = atan2(velV, uInterpNodoV);
+			f2 = find(thetaNS <= 0);
+			thetaNS(f2) = thetaNS(f2) + 2*pi;
 
-			thetans = atan2(vaux, Uvaux);
-			f2 = find(thetans <= 0);
-			thetans(f2) = thetans(f2) + 2*pi;
+			coefDispersion.velU = velU; % velocidades de los nodos que no son borde
+			coefDispersion.velV = velV;
+			
+			coefDispersion.kxxwe = uAstWE.*[hoWE + etaWE].*(eL*cos(thetaWE).^2 + eT*sin(thetaWE).^2) + coefDifusion;
+			coefDispersion.kyyns = uAstNS.*[hoNS + etaNS].*(eL*sin(thetaNS).^2 + eT*cos(thetaNS).^2) + coefDifusion;
 
-			coefDispersion.kxxwe = uast.*[howe + etawe].*(eL*cos(thetawe).^2 + eT*sin(thetawe).^2);
-			coefDispersion.kyyns = uast.*[hons + etans].*(eL*sin(thetans).^2 + eT*cos(thetans).^2);
-			velocidades.velU = uaux;
-			velocidades.velV = vaux;
-			thisVolumenesFinitos.coefDispersion = coefDispersion;
-			thisVolumenesFinitos.velocidades = velocidades;
+			if strcmpi(flujos, 'adveccion') || strcmpi(flujos, 'adveccionverticales')
+				
+				coefDispersion.kxxwe = coefDispersion.kxxwe*0;
+				coefDispersion.kyyns = coefDispersion.kyyns*0;
+
+			elseif strcmpi(flujos, 'dispersion') || strcmpi(flujos, 'dispersionverticales')
+
+				coefDispersion.velU = coefDispersion.velU*0;
+				coefDispersion.velV = coefDispersion.velV*0;
+			
+			elseif strcmpi(flujos, 'advecciondispersion') || strcmpi(flujos, 'advecciondispersionverticales')		
+				
+			else
+
+				error('Error de sintaxis: Los flujos especificados no son correctos')
+			end
 
 		end % function coeficientesDispersion
 
-		function thisVolumenesFinitos = leyDePotencia(thisVolumenesFinitos, simulacion, solucion)
-			% no he definido uaux vaux
+		function leyPotencia = leyDePotencia(thisVolumenesFinitos, simulacion, coefDipersion)
+			% keyboard
 			malla = getMalla(simulacion);
 			bat = getBatimetria(simulacion);
+			IDwe = malla.matrizIDwe;
+			IDns = malla.matrizIDns;
 			howe = bat.hoNodosU;
 			hons = bat.hoNodosV;
 
@@ -202,10 +311,10 @@ classdef VolumenesFinitos < TransporteOD
 			nBSu = malla.numeroBordesSuperior;
 			nBIn = malla.numeroBordesInferior;
 
-			kxxwe = thisVolumenesFinitos.coefDipersion.kxxwe;
-			kyyns = thisVolumenesFinitos.coefDipersion.kyyns;
-			uaux = thisVolumenesFinitos.velocidades.velU;
-			vaux = thisVolumenesFinitos.velocidades.velV;
+			kxxwe = coefDipersion.kxxwe;
+			kyyns = coefDipersion.kyyns;
+			uaux = coefDipersion.velU;
+			vaux = coefDipersion.velV;
 
 			[dx dy] = getDeltaX(simulacion);
 
@@ -226,7 +335,7 @@ classdef VolumenesFinitos < TransporteOD
 			aN = Dn.*max(0,(1-0.1*abs(Fn./Dn)).^5) + max(0,-Fn);
 			aS = Ds.*max(0,(1-0.1*abs(Fs./Ds)).^5) + max(0,Fs);
 			IDetaC = malla.matrizIDetaC; % Nodos eta: W, E, S, N
-
+% keyboard
 			% Condiciones de Borde
 			aE(nBDe) = 0; IDetaC(nBDe,2) = 1;
 			aW(nBIz) = 0; IDetaC(nBIz,1) = 1;
@@ -237,16 +346,268 @@ classdef VolumenesFinitos < TransporteOD
 			coefTransporte.aW = aW;
 			coefTransporte.aN = aN;
 			coefTransporte.aS = aS;
-			thisVolumenesFinitos.coefTransporte = coefTransporte;	
-			thisVolumenesFinitos.IDetaC = IDetaC;
+			leyPotencia.coefTransporte = coefTransporte;	
+			leyPotencia.IDetaC = IDetaC; % Nodos eta: W, E, S, N
 
 		end % function leyDePotencia
 
-%		function 
+		function concIterK = iteraVolFinitos(thisVolumenesFinitos, simulacion, sol, coefTransEta, varargin)
 
-%		end
+			flujos = thisVolumenesFinitos.Flujos;
+			masa = thisVolumenesFinitos.Masa;
+			
+			% keyboard
+
+			if strcmpi(flujos, 'advecciondispersionverticales') || strcmpi(flujos, 'adveccionverticales') ...
+                           || strcmpi(flujos, 'dispersionverticales')
+
+				claseMasa = class(masa);
+				eval(['masa = ', claseMasa, '(masa, simulacion, sol);'])
+				thisVolumenesFinitos.Masa = masa;
+
+				% keyboard
+			
+			end
+
+			% keyboard
+
+			% La idea de esta funcion es iterar y ajustar
+			% la concentracion espacial que satisface con algun criterio 
+			% de convergencia. En el caso de que existan 
+			% flujos verticales, el criterio de convergencia 
+			% es teoricamente que el promedio espaicl de los flujos
+			% verticales por la superficie es igual al promedio 
+			% al promedio espacial de los flujos verticales por 
+			% el fondo
+
+			
+			coefTransporte = coefTransEta.coefTransporte;
+			IDC = coefTransEta.IDetaC; % Nodos eta: W, E, S, N
+			aW = coefTransporte.aW;
+			aE = coefTransporte.aE;
+			aN = coefTransporte.aN;
+			aS = coefTransporte.aS;
+			nEta = getNumeroNodos(simulacion);
+			[deltaX deltaY] = getDeltaX(simulacion);
+
+			% Entrego una adivinanza inicial para comenzar las 
+			% iteraciones. La idea es que este valor sea lo 
+			% suficientemente alto para estar lejos
+			% de la convergencia pero que efectivamente el estado
+			% de equilibrio sea alcanzable. El valor inicial 
+			% es ahora 5 veces la concentracion caracteristica 
+			% de la masa. 
+
+			concSaturacion = thisVolumenesFinitos.Masa.concSaturacion;
+			concInicial = ones(nEta,1)*concSaturacion*5; 
+
+			% La condicion inicial eventualmente puede 
+			% ser especificada
+
+			% Iteraciones hasta convergencia
+			% Aun no veo que ocurre si la masa transportada
+			% tiene flujos verticales y el usuario 
+			% solicita resolverlos
+			
+			errorVF = 10;
+			concIterK = concInicial;
+			fila = (1:nEta)';
+			xCoefTrans = [fila; fila; fila; fila; fila];
+			yCoefTrans = [fila; IDC(:,1); IDC(:,2); IDC(:,4); IDC(:,3)]; %aP, -aW, -aE, -aN, -aS
+
+			k = 0;
+
+			switch thisVolumenesFinitos.RegimenTemporal
+
+				case 'permanente'
+
+					while errorVF > 1e-12
+
+						k = k+1 
+						% Calculo flujos verticales. Son funcion de la 	
+						% concentracion
+
+						F0 = F0VF(masa, concIterK);
+						F1 = F1VF(masa, concIterK); 
+
+						% Por ahora hago esto solo para el RP
+						% Falta modificar coeficientes bVF y aP 
+						% para el caso en que estamos resolviendo el RI
+						bVF = F0*deltaX*deltaY;
+						aP = aE + aW + aN + aS - F1*deltaX*deltaY;
+	
+						% Asigno coeficientes a matriz para invertir
+						matrixG = sparse(xCoefTrans, yCoefTrans, [aP; -aW; ...
+							  -aE; -aN; -aS]);
+						concIterKMas = matrixG\bVF;
+						fC = find(concIterKMas < 0);
+						concIterKMas(fC) = 0;
+						% errorVF = sqrt(sum(abs(concIterKMas - concIterK).^2));
+						errorVF = errorVolFinitos(masa, simulacion, ...
+							  concIterKMas, concIterK);
+						concIterK = concIterKMas;
+						
+						if k > 100 
+							% concIterK = zeros(size(concIterK));
+							concIterK = concIterKMas*NaN;
+							break
+
+						end
+					end %while
+
+				case 'impermanente'
+
+					variaTempo = varargin{1};
+					deltaT = variaTempo.deltaT;
+					cp0 = variaTempo.cp0;
+					eta0 = variaTempo.eta0;
+					bat = getBatimetria(simulacion);
+					heta = bat.hoNodosEta;
+					eta = sol(1:nEta);
+
+					while errorVF > 1e-15
+
+						k = k+1 
+						% Calculo flujos verticales. Son funcion de la 	
+						% concentracion
+
+						F0 = F0VF(masa, concIterK);
+						F1 = F1VF(masa, concIterK); 
+
+						% Por ahora hago esto solo para el RP
+						% Falta modificar coeficientes bVF y aP 
+						% para el caso en que estamos resolviendo el RI
+						bVF = heta.*cp0*deltaX*deltaY/deltaT + F0*deltaX*deltaY;
+						aP = aE + aW + aN + aS + (heta - eta + eta0)*deltaX*deltaY/deltaT - F1*deltaX*deltaY;
+	
+						% Asigno coeficientes a matriz para invertir
+						matrixG = sparse(xCoefTrans, yCoefTrans, [aP; -aW; ...
+							  -aE; -aN; -aS]);
+						concIterKMas = matrixG\bVF;
+						fC = find(concIterKMas < 0);
+						concIterKMas(fC) = 0;
+						errorVF = sqrt(sum(abs(concIterKMas - concIterK).^2));
+						% errorVF = errorVolFinitos(masa, simulacion, ...
+						%	   concIterKMas, concIterK)
+						concIterK = concIterKMas;
+
+						if k > 100 
+							concIterK = concIterKMas*NaN;
+							break
+						end
+
+					end %while
+			end %switch
+
+		end % function iteraVolFinitos
+
+
+		function thisVolumenesFinitos = asignaPropiedad(thisVolumenesFinitos, varargin)
+
+			% Debo detectar en varargin si
+			% los strings ingresados en las
+			% posiciones impares son propiedades
+			% de la clase		
+
+			nInput = length(varargin);
+			
+			% El largo de varargin debe ser par
+
+			if  mod(nInput, 2) || nInput == 0
+
+				error(['Falta especificar un valor o propiedad ' ...
+				      'en el constructor de la clase'])
+				
+			end
+	
+			posPropiedades = linspace(1, nInput-1, nInput*0.5);
+			posValores = linspace(2, nInput, nInput*0.5);				
+
+			propInput = cell(nInput*0.5,2);
+
+			for iInput = 1:nInput*0.5		
+				
+				if ~strcmpi(class(varargin{posPropiedades(iInput)}), ...
+					   'char')					
+					error(['Las propiedades a asignar deben ser' ...
+					      ' especificadas en un string con el nombre' ...
+					      ' de la propiedad'])	
+	
+				end
+			
+				propInput{iInput, 1} = varargin{posPropiedades(iInput)};
+				propInput{iInput, 2} = varargin{posValores(iInput)};
+
+				isProp = isprop(thisVolumenesFinitos, propInput{iInput, 1});
+
+				if isProp
+			
+					eval(['thisVolumenesFinitos.', propInput{iInput, 1} ...
+					    ' = propInput{iInput, 2};' ])				
+				else
+					error(['La propiedad ', propInput{iInput, 1}, ...
+						' no es parte del objeto ', class(thisVolumenesFinitos)])
+				end				
+
+			end 	
 		
+			% keyboard
 
+			% La celda propInput tiene la informacion de
+			% la propiedad que queiro asignar en el objeto 
+			% en la primera columna y el valor que esta
+			% deberia tener en la segunda columna
+
+		end% funcion asignaPropiedad
+
+		function masa = getMasa(thisVolumenesFinitos)
+
+			masa = thisVolumenesFinitos.Masa;
+
+		end %getMasa
+
+		function flujos = getFlujos(thisVolumenesFinitos)
+
+			flujos = thisVolumenesFinitos.Flujos;
+
+		end %getFlujos
+
+		function numPecletVert = pecletVertical(thisVolumenesFinitos, simulacion)
+
+			malla = getMalla(simulacion);
+			Lx = max(malla.coordenadasU(:,1)) - ... 	
+			     min(malla.coordenadasU(:,1));
+			Ly = max(malla.coordenadasV(:,2)) - ... 	
+			     min(malla.coordenadasV(:,2));
+			L = max([Lx Ly]);
+
+			solHidro = getHidrodinamica(simulacion);
+			[eta u v] = getEtaUV(simulacion, solHidro.Solucion(:,end));
+			modV = sqrt(u.^2 + v.^2);
+			bat = getBatimetria(simulacion);
+			heta = bat.hoNodosEta;
+
+			masa = getMasa(thisVolumenesFinitos);
+			fAtm = masa.FlujosVerticales.flujoAtm;
+			kl = fAtm.kl;
+			fSed = masa.FlujosVerticales.flujoSed;
+			kt = fSed.kt;
+			S = fSed.S;
+			cTilde = cMezclaCompleta(masa);
+			% numPecletVert =	modV.*(heta + eta)/(L*abs(fSed.dFuncion(S,mean(kt), cTilde) - kl));
+			numPecletVert =	modV.*(heta + eta)./(L*abs(fSed.dFuncion(S, kt, cTilde) - kl));
+		end %function pecletVertical
+
+		function flujoSed = flujoSedimentos(thisVolumenesFinitos)
+
+			masa = getMasa(thisVolumenesFinitos);
+			fSed = masa.FlujosVerticales.flujoSed;
+			kt = fSed.kt;
+			S = fSed.S;
+			concentracion = thisVolumenesFinitos.Solucion;
+			flujoSed = fSed.funcion(S, kt, concentracion);
+
+		end %function flujoSedimentos
 
 	end %methods
 end %classdef
@@ -254,194 +615,4 @@ end %classdef
 %%%%%%%%%%%%%%%%%%%%%%%%% THRASH
 
 
-%		function 
-
-		%	
-			%%% Parametros para el transporte de OD
-
-			%	parametros = cuerpo.Parametros;
-			%	rho = parametros.densidadRho;
-			%	rho_a = parametros.densidadAire;
-			%	kap = parametros.kappaVonKarman;
-			%	nu = parametros.viscosidadNu;
-			%	D = parametros.difusionOD;
-			%	phi = parametros.porosidadPhi;
-			%	CSat = parametros.saturacionOD;
-			%	zeo = 0.01; % m
-			%	Ds = phi*D; % (Bryant 2010)
-			%	erre = 2/86400; % kg/m3/s  %r entre 0.1 y 1 kg/m3/dia
-
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-			%	u = soluciones.solucionU;
-			%	v = soluciones.solucionV;
-			%	modV = sqrt(u.^2 + v.^2); %m/s
-			%	
-			%	% ucwater = sqrt(tauprom/rho); %m/s
-			%	ucwater = uAsterisco; %m/s  
-			%	ucair = ucwater*sqrt(rho/rho_a);
-			%	Sc = nu/D;
-
-			%	% Ecuaciones que caracterizan flujo de OD hacia sedimentos (Nakamura & Stefan, 1994)	
-			%	S = 2*phi*erre*Ds; % kg/m/s
-
-			%	heta = cuerpo.Geometria.batimetriaKranenburg.hoEta;
-			%	eta = soluciones.solucionEta;
-			%	% keyboard
-			%	numeroReynolds = modV.*(heta + eta)/nu;
-			%	kt = ucwater*min(27.08*Sc^(-2/3)./numeroReynolds,1/20); % m/s de la Fuente et al. 2014
-			%	% keyboard
-			%	Fsed = inline('S/2*(k.^(-1) - sqrt(k.^(-2) + 4*C/S))','S','k','C'); % C es el 
-			%	dFsed = inline('-1./sqrt(k.^(-2) + 4.*C/S)','S','k','C');  
-
-			%%% Flujo Atmósfera
-			%	u10 = ucair*log(10/zeo)/kap; %Si uast es vector, entonces U10 debería ser vector. (variabilidad espacial de esfuerzo de corte)
-			%	kl = (170.6*Sc^-0.5*u10^1.81*sqrt(rho_a/rho))*2.78e-6; %m/s (Ro, 2007)
-
-			%	% Ecuación que caracteriza flujo de OD hacia atmósfera 
-			%	Fatm = inline('kl*(CSat - C)','kl','CSat','C');
-
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-			%%% Coeficientes de Dispersion (Holly, 1984). Interpolaciones para eta.
-			%	mallaStaggered = getMalla(cuerpo);
-			%	mallaStaggered = mallaStaggered.InformacionMalla;	
-			%	
-			%	Neta = length(mallaStaggered.coordenadasEta);
-			%	Nns = length(mallaStaggered.coordenadasU);
-			%	New = length(mallaStaggered.coordenadasV);
-			%	IDwe = mallaStaggered.IDwe;
-			%	IDns = mallaStaggered.IDns;	
-			%	IDetaC = mallaStaggered.IDC;	
-			%	howe =  cuerpo.Geometria.batimetriaKranenburg.hoU;     
-			%	hons =  cuerpo.Geometria.batimetriaKranenburg.hoV;	
-
-			%	dx = cuerpo.Geometria.deltaX;
-			%	dy = cuerpo.Geometria.deltaY;
-
-			%	nBIz = mallaStaggered.numeroBordesIzquierdo;
-			%	nBDe = mallaStaggered.numeroBordesDerecho;
-			%	nBSu = mallaStaggered.numeroBordesSuperior;
-			%	nBIn = mallaStaggered.numeroBordesInferior;
-			%	
-			%	SOL = soluciones.solucionCompleta;
-			%	
-			%	coeficientesDispersion
-
-			%	if(strcmpi(dispersion, 'sinDispersion'))
-			%		kxxwe = kxxwe*0;
-			%		kyyns = kyyns*0;
-			%	end
-
-			%%% Métodos de resolución
-			%	esquemaLeyDePotencia
-			%	volumenesFinitos.concentracionEta = C_VF;
-			%	volumenesFinitos.numeroPeclet = numeroPeclet;
-
-%		end
-
-
-
-%		function leyDePotencia
-
-			%% Rodrigo Pérez I. 
-			%% Volúmenes Finitos (con esquema ley de potencia) para resolver transporte de OD.
-			%% Los términos fuente están linealizados.
-
-			%%% Coeficientes
-
-			%	etawe = etawe*0;
-			%	etans = etans*0;
-
-			%	% m3/s
-			%	De = [howe(IDwe(:,2)) + etawe(IDwe(:,2))].*kxxwe(IDwe(:,2))*dy/(0.5*dx);
-			%	Dw = [howe(IDwe(:,1)) + etawe(IDwe(:,1))].*kxxwe(IDwe(:,1))*dy/(0.5*dx);
-			%	Ds = [hons(IDns(:,2)) + etans(IDns(:,2))].*kyyns(IDns(:,2))*dx/(0.5*dy);
-			%	Dn = [hons(IDns(:,1)) + etans(IDns(:,1))].*kyyns(IDns(:,1))*dx/(0.5*dy);
-
-			%	%m3/s
-			%	Fe = [howe(IDwe(:,2)) + etawe(IDwe(:,2))].*uaux(IDwe(:,2))*dy; 
-			%	Fw = [howe(IDwe(:,1)) + etawe(IDwe(:,1))].*uaux(IDwe(:,1))*dy;
-			%	Fs = [hons(IDns(:,2)) + etans(IDns(:,2))].*vaux(IDns(:,2))*dx;
-			%	Fn = [hons(IDns(:,1)) + etans(IDns(:,1))].*vaux(IDns(:,1))*dx;
-
-			%	aE = De.*max(0,(1-0.1*abs(Fe./De)).^5) + max(0,-Fe);
-			%	aW = Dw.*max(0,(1-0.1*abs(Fw./Dw)).^5) + max(0,Fw);
-			%	aN = Dn.*max(0,(1-0.1*abs(Fn./Dn)).^5) + max(0,-Fn);
-			%	aS = Ds.*max(0,(1-0.1*abs(Fs./Ds)).^5) + max(0,Fs);
-
-			%	IDetaCaux = IDetaC; % Nodos eta: W, E, E+1, S, N, N+1
-
-			%	% Condiciones de Borde
-			%	aE(nBDe) = 0; IDetaCaux(nBDe,2) = 1;
-			%	aW(nBIz) = 0; IDetaCaux(nBIz,1) = 1;
-			%	aN(nBSu) = 0; IDetaCaux(nBSu,5) = 1;
-			%	aS(nBIn) = 0; IDetaCaux(nBIn,4) = 1;
-
-			%	% Adivinanza Inicial (concentración uniforme e igual a Saturación)
-
-			%	Ci = ones(Neta,1)*CSat;
-			%	C_VF = Ci;
-			%	Ck = 10*Ci;
-			%	kvf = 1;
-
-			%	Fsedprom = 0;
-			%	Fatmprom = 10;
-
-			%	% Iteraciones hasta convergencia
-
-			%	while abs(Fsedprom + Fatmprom) > eps
-			%		Ck = C_VF;
-			%		% pause	
-			%		% keyboard
-			%		Fo = kl*CSat*ones(Neta,1) + Fsed(S,kt,Ck) - dFsed(S,kt,Ck).*Ck; %kg/m2/s
-			%		F1 = dFsed(S,kt,Ck) - kl; %m/s
-			%		bvf = Fo*dx*dy; %kg/s
-			%		aP = aE + aW + aN + aS- F1*dx*dy + Fe - Fw + Fn - Fs;
-			%		generaMatricesVolumenesFinitos
-			%		% keyboard
-			%		C_VF = G\bvf;
-			%		fcm = find(C_VF<=0);
-			%		C_VF(fcm) = 0;
-			%		kvf = kvf + 1;
-			%		Fsedprom = sum(Fsed(S,kt,C_VF)*dx*dy)/(Neta*dx*dy);
-			%		Fatmprom = sum(Fatm(kl,CSat,C_VF)*dx*dy)/(Neta*dx*dy);
-			%		% pause
-			%		
-			%	end 
-
-			%% Calculo de Ctilde
-			%concentracionesPosibles = 0:CSat/100:CSat;
-
-			%for iC = 1:length(concentracionesPosibles)
-			%	Fanapos(iC) = Fsed(S,mean(kt), concentracionesPosibles(iC)) + Fatm(kl,CSat,concentracionesPosibles(iC));	
-			%end
-
-			%concentracionTilde = linterp(-Fanapos, concentracionesPosibles, 0);
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			%R = cuerpo.Geometria.radioKranenburg;
-			%% keyboard
-			%numeroPeclet = modV.*(heta + eta)/(2*R*abs(dFsed(S,mean(kt),concentracionTilde) - kl));
-
-			%% full(modV.*(heta + eta)/(2*R*abs(dFsed(S,mean(kt),Canalitico) - kl)))
-
-			%% t_VF = toc;
-
-			%% Fsedprom = sum(Fsed(S,kt,C_VF)*dx*dy)/(Neta*dx*dy);
-			%% Fatmprom = sum(Fatm(kl,CSat,C_VF)*dx*dy)/(Neta*dx*dy);
-			%% C_prom = mean(C_VF);
-
-
-%		end 
-		
-		%% function
-
-			%% Rodrigo Pérez I. 
-			%% Rutina que genera matrices para el problema de volúmenes finitos
-			%% El problema se plantea de la forma G*C = b
-			%% IDetaC = zeros(Neta,6); % Nodos eta: W, E, E+1, S, N, N+1
-
-			%fila = (1:Neta)';
-			%G = sparse([fila;fila;fila;fila;fila],[fila; IDetaCaux(:,1); IDetaCaux(:,2); IDetaCaux(:,5); IDetaCaux(:,4)], [aP;-aW;-aE;-aN;-aS]);
-		%% end
 

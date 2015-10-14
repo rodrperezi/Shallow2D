@@ -57,6 +57,7 @@ classdef GeoKranenburg < Geometria
 		radioR
 		alturaH
 
+
 	end
     
 	methods
@@ -80,9 +81,44 @@ classdef GeoKranenburg < Geometria
 					dy = dx;
 					thisGeoKranenburg.Malla = Staggered(Malla(), thisGeoKranenburg, dx, dy);
 					thisGeoKranenburg.Batimetria = batimetriaKranenburg(Batimetria(), thisGeoKranenburg);
-				end
-			end
-		end %function
+				end %if
+			end %if
+		end %function GeoKranenburg
+
+		function bat = getBatimetria(geoKran)
+
+			bat = geoKran.Batimetria;
+
+		end %getBatimetria
+
+		function malla = getMalla(geoKran)
+
+			malla = geoKran.Malla;
+
+		end %getMalla
+
+		function rel = relacionAspecto(geoKran)
+
+			malla = getMalla(geoKran);
+			Lx = max(malla.coordenadasU(:,1)) - ... 	
+			     min(malla.coordenadasU(:,1));
+			Ly = max(malla.coordenadasV(:,2)) - ... 	
+			     min(malla.coordenadasV(:,2));
+			L = max([Lx Ly]);
+			bat = getBatimetria(geoKran);
+			hom = mean(bat.hoNodosEta);
+
+			rel = L/hom;
+
+		end % function relacionAspecto
+
+		function hom = profundidadMedia(geoKran)
+
+			bat = getBatimetria(geoKran);
+			hom = mean(bat.hoNodosEta);
+
+		end % function profundidadMedia
+
 	end %methods
 end %classdef
 

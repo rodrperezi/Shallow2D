@@ -61,15 +61,42 @@ classdef AnalisisModal < Hidrodinamica
 				tic
 				thisAnalisisModal.Tipo = 'AnalisisModal';
 				thisAnalisisModal.RegimenTemporal = regimenTemporal;
-				thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);
+				thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);				
+
+
+% 				if ~strcmpi(regimenTemporal, 'amplituddesdesolucion)')
+					
+% 					thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);	
+
+%				elseif	strcmpi(regimenTemporal, 'amplituddesdesolucion)')
+%				
+%					solHidro = getHidrodinamica(simulacion);
+
+%					if strcmpi(class(solHidro), 'analisismodal')
+%					
+%						if isempty(solHidro.VyVPropios)	
+%					
+%							thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, ...
+%									    simulacion);				
+
+%						end
+%					
+%					else
+
+%						thisAnalisisModal = calculaVyVPropios(thisAnalisisModal, simulacion);	
+
+%					end
+
+% 				end
+
+
 				if(~strcmpi(regimenTemporal, 'modoslibres'))
 					thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion);
 				end
 				thisAnalisisModal.tiempoComputo = toc;
 				% [Solucion2D.Eta Solucion2D.U Solucion2D.V] = solucion2D(simulacion, thisAnalisisModal.Solucion);
 				% thisAnalisisModal.Solucion2D = Solucion2D;
-%				res = Resultados(thisAnalisisModal);
-%				simulacion.Resultados = res;
+
 			end %if
 		end %function AnalisisModal
 
@@ -93,13 +120,18 @@ classdef AnalisisModal < Hidrodinamica
 			
 			% Resuelvo problema por la derecha. 
 				[vectoresDerecha, valoresDerecha]= eig(full([K + C]), full(M));
+				% [vectoresIzquierda, valoresIzquierda]= eig(full([K + C]'), full(M));
 				valoresDerecha = diag(valoresDerecha);
+				% valoresIzquierda = diag(valoresIzquierda);
 
 			% Corto decimales que sean menores que la precision del programa
 
 				corta = 1e-15;
 				vectoresDerecha = quant(real(vectoresDerecha), corta) + i*quant(imag(vectoresDerecha), corta);
 				valoresDerecha = quant(real(valoresDerecha), corta) + i*quant(imag(valoresDerecha), corta);
+%				vectoresIzquierda = quant(real(vectoresIzquierda), corta) + i*quant(imag(vectoresIzquierda), corta);
+%				valoresIzquierda = quant(real(valoresIzquierda), corta) + i*quant(imag(valoresIzquierda), corta);
+
 			
 			% Normaliza vectores propios de manera que tengan norma unitaria
 
@@ -111,6 +143,15 @@ classdef AnalisisModal < Hidrodinamica
 
 				vectoresDerecha = vectoresDerecha./(repmat(normaDerecha, length(valoresDerecha), 1));
 
+%				normaIzquierda = zeros(1,length(valoresIzquierda));
+
+%				for iNorma = 1:length(valoresIzquierda)
+%					normaIzquierda(iNorma) = norm(vectoresIzquierda(:,iNorma));
+%				end
+
+%				vectoresIzquierda = vectoresIzquierda./(repmat(normaIzquierda, length(valoresIzquierda), 1));
+
+
 			% Busco y borro valores propios nulos
 
 				fNuloDer = find(abs(valoresDerecha) < eps);
@@ -118,6 +159,13 @@ classdef AnalisisModal < Hidrodinamica
 				vectoresDerechaNulo = vectoresDerecha(:,fNuloDer);
 				valoresDerecha(fNuloDer) =  [];
 				vectoresDerecha(:,fNuloDer) =  [];
+
+%				fNuloIzq = find(abs(valoresIzquierda) < eps);
+%				valoresIzquierdaNulo = valoresIzquierda(fNuloIzq);
+%				vectoresIzquierdaNulo = vectoresIzquierda(:,fNuloIzq);
+%				valoresIzquierda(fNuloIzq) =  [];
+%				vectoresIzquierda(:,fNuloIzq) =  [];
+
 
 			% Busco y ordeno vectores con omega positivo.
 
@@ -127,16 +175,31 @@ classdef AnalisisModal < Hidrodinamica
 				[valoresDerechaMasR indDerPos] = sort(valoresDerechaMasR);
 				vectoresDerechaMasR = vectoresDerechaMasR(:,indDerPos);
 
+%				fIzquierda = find(real(valoresIzquierda) > 0);
+%				valoresIzquierdaMasR = valoresIzquierda(fIzquierda);
+%				vectoresIzquierdaMasR = vectoresIzquierda(:,fIzquierda);
+%				[valoresIzquierdaMasR indIzqPos] = sort(valoresIzquierdaMasR);
+%				vectoresIzquierdaMasR = vectoresIzquierdaMasR(:,indIzqPos);
+
+
 			% Busco vectores con omega cero.
 				% keyboard
 				fDerechaOmegaCero = find(real(valoresDerecha) == 0);
 				valoresDerechaOmegaCero = valoresDerecha(fDerechaOmegaCero);
 				vectoresDerechaOmegaCero = vectoresDerecha(:,fDerechaOmegaCero);
 
+%				fIzquierdaOmegaCero = find(real(valoresIzquierda) == 0);
+%				valoresIzquierdaOmegaCero = valoresIzquierda(fIzquierdaOmegaCero);
+%				vectoresIzquierdaOmegaCero = vectoresIzquierda(:,fIzquierdaOmegaCero);
+
 			% Ordena las partes imaginarias de los valores con omega cero. De menor a mayor
 
 				[valoresDerechaOmegaCero indDerechaOmegaCero]= sort(valoresDerechaOmegaCero);
 				vectoresDerechaOmegaCero = vectoresDerechaOmegaCero(:,indDerechaOmegaCero);
+
+%				[valoresIzquierdaOmegaCero indIzquierdaOmegaCero]= sort(valoresIzquierdaOmegaCero);
+%				vectoresIzquierdaOmegaCero = vectoresIzquierdaOmegaCero(:,indIzquierdaOmegaCero);
+
 
 			% Asigno problema de la izquierda en funcion del problema por la derecha. 
 			% Para entender la relacion entre ambos, ver Memoria.
@@ -151,6 +214,17 @@ classdef AnalisisModal < Hidrodinamica
 
 				ProblemaDerecha.Vectores = VectoresDerecha;
 				ProblemaDerecha.Valores = ValoresDerecha;
+
+%				VectoresIzquierda.MasR = vectoresIzquierdaMasR;
+%				VectoresIzquierda.MenosR = conj(vectoresIzquierdaMasR);
+%				VectoresIzquierda.OmegaCero = vectoresIzquierdaOmegaCero;
+
+%				ValoresIzquierda.MasR = valoresIzquierdaMasR;		
+%				ValoresIzquierda.MenosR = -conj(valoresIzquierdaMasR);
+%				ValoresIzquierda.OmegaCero = valoresIzquierdaOmegaCero;		
+
+%				ProblemaIzquierda.Vectores = VectoresDerecha;
+%				ProblemaIzquierda.Valores = ValoresIzquierda;
 		
 				ValoresIzquierda.MasR = conj(ValoresDerecha.MasR);
 				ValoresIzquierda.MenosR = conj(ValoresDerecha.MenosR);
@@ -165,7 +239,7 @@ classdef AnalisisModal < Hidrodinamica
 
 		end %function calculaVyVPropios
 
-		function thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion)
+		function thisAnalisisModal = amplitudModal(thisAnalisisModal, simulacion, varargin)
 		
 			% Para realizar el calculo de las amplitudes modales, 	
 			% necesito los vyvpropios, el forzante externo y las 
@@ -191,19 +265,18 @@ classdef AnalisisModal < Hidrodinamica
 				cuantosVectoresR = length(problemaIzquierda.Valores.MasR);					
 				cuantosVectoresOmegaCero = length(problemaIzquierda.Valores.OmegaCero);
 
+				nEta = getNumeroNodos(simulacion);
+				areaTotal = nEta*deltaX*deltaY;
+
 		        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-				eTildeDerechaMasR = dot(vectoresIzquierdaMasR, M*vectoresDerechaMasR)*deltaX*deltaY;
-				eTildeDerechaMenosR = dot(vectoresIzquierdaMenosR, M*vectoresDerechaMenosR)*deltaX*deltaY;
-				eTildeDerechaOmegaCero = dot(vectoresIzquierdaOmegaCero, M*vectoresDerechaOmegaCero)*deltaX*deltaY;
+				eTildeDerechaMasR = dot(vectoresIzquierdaMasR, M*vectoresDerechaMasR)*areaTotal;
+				eTildeDerechaMenosR = dot(vectoresIzquierdaMenosR, M*vectoresDerechaMenosR)*areaTotal;
+				eTildeDerechaOmegaCero = dot(vectoresIzquierdaOmegaCero, M*vectoresDerechaOmegaCero)*areaTotal;
 
-%				eTildeIzquierdaMasR = dot(vectoresDerechaMasR, M*vectoresIzquierdaMasR)*deltaX*deltaY;
-%				eTildeIzquierdaMenosR = dot(vectoresDerechaMenosR, M*vectoresIzquierdaMenosR)*deltaX*deltaY;
-%				eTildeIzquierdaOmegaCero = dot(vectoresDerechaOmegaCero, M*vectoresIzquierdaOmegaCero)*deltaX*deltaY;
-%				keyboard
-				iOMGeTildeDerMasR = i*dot(vectoresIzquierdaMasR, (K+C)*vectoresDerechaMasR)*deltaX*deltaY;
-				iOMGeTildeDerMenosR = i*dot(vectoresIzquierdaMenosR, (K+C)*vectoresDerechaMenosR)*deltaX*deltaY;
-				iOMGeTildeDerOmegaCero = i*dot(vectoresIzquierdaOmegaCero, (K+C)*vectoresDerechaOmegaCero)*deltaX*deltaY;
+				iOMGeTildeDerMasR = i*dot(vectoresIzquierdaMasR, (K+C)*vectoresDerechaMasR)*areaTotal;
+				iOMGeTildeDerMenosR = i*dot(vectoresIzquierdaMenosR, (K+C)*vectoresDerechaMenosR)*areaTotal;
+				iOMGeTildeDerOmegaCero = i*dot(vectoresIzquierdaOmegaCero, (K+C)*vectoresDerechaOmegaCero)*areaTotal;
 
 				if strcmpi(thisAnalisisModal.RegimenTemporal, 'permanente')
 					% Si el problema se resuelve utilizando el régimen permanente,
@@ -216,9 +289,9 @@ classdef AnalisisModal < Hidrodinamica
 					if isempty(tiempoForzante)
 						% Este es el caso en que el forzante es permanente
 
-						fTildeMasR = dot(vectoresIzquierdaMasR, repmat(forzanteExterno, 1, cuantosVectoresR))*deltaX*deltaY;
-						fTildeMenosR = dot(vectoresIzquierdaMenosR, repmat(forzanteExterno, 1, cuantosVectoresR))*deltaX*deltaY;
-						fTildeOmegaCero = dot(vectoresIzquierdaOmegaCero, repmat(forzanteExterno, 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+						fTildeMasR = dot(vectoresIzquierdaMasR, repmat(forzanteExterno, 1, cuantosVectoresR))*areaTotal;
+						fTildeMenosR = dot(vectoresIzquierdaMenosR, repmat(forzanteExterno, 1, cuantosVectoresR))*areaTotal;
+						fTildeOmegaCero = dot(vectoresIzquierdaOmegaCero, repmat(forzanteExterno, 1, cuantosVectoresOmegaCero))*areaTotal;
 
 						aTildeDerechaMasR = -fTildeMasR./(iOMGeTildeDerMasR);
 						aTildeDerechaMenosR = -fTildeMenosR./(iOMGeTildeDerMenosR);
@@ -258,12 +331,17 @@ classdef AnalisisModal < Hidrodinamica
 %						sPlot(3) = subplot(2,2,3);
 %			sdfsdsdffsdfaf			graficaModo(simulacion, solAcumulada)
 
-						% keyboard					
-						thisAnalisisModal.Solucion = solAcumulada;
+						% keyboard				
+						testImag = sum(imag(solAcumulada)./real(solAcumulada));
+	
+						if testImag < 1e-12				
+							thisAnalisisModal.Solucion = real(solAcumulada);
+						else 
+							thisAnalisisModal.Solucion = solAcumulada;
+						end
 			
 					
 					else
-						% Este es el caso en que el forzante es impermanente y se pide
 						error('No puedes resolver un forzante impermanente con el método permanente')
 				
 					end % if
@@ -294,7 +372,7 @@ classdef AnalisisModal < Hidrodinamica
 						% Entonces tomo los datos de tiempo del forzante
 
 						tiempoCalculo = tiempoForzante;
-						deltaT = abs(tiempoCalculo(1)-tiempoCalculo(2));
+						deltaT = abs(tiempoCalculo(1)-tiempoCalculo(2)); %asumo deltaT constante
 						nTiempoCalculo = length(tiempoCalculo);
 
 					end
@@ -317,26 +395,26 @@ classdef AnalisisModal < Hidrodinamica
 						waitbar(iTiempo/nTiempoCalculo)
 
 						fTMasRTmUno = dot(vectoresIzquierdaMasR, ...
-						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*deltaX*deltaY;
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*areaTotal;
 						fTMasRT = dot(vectoresIzquierdaMasR, ... 
-							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*deltaX*deltaY;
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*areaTotal;
 						fTildeMasRProm = 0.5*(fTMasRTmUno + fTMasRT);
 
 						aTildeDerechaMasR(iTiempo,:) = ((0.5*iOMGeTildeDerMasR + eTildeDerechaMasR/deltaT).*aTildeDerechaMasR(iTiempo-1,:) + fTildeMasRProm)./(eTildeDerechaMasR/deltaT - 0.5*iOMGeTildeDerMasR); 
 
 
 						fTMenosRTmUno = dot(vectoresIzquierdaMenosR, ...
-						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*deltaX*deltaY;
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresR))*areaTotal;
 						fTMenosRT = dot(vectoresIzquierdaMenosR, ... 
-							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*deltaX*deltaY;
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresR))*areaTotal;
 						fTildeMenosRProm = 0.5*(fTMenosRTmUno + fTMenosRT);
 
 						aTildeDerechaMenosR(iTiempo,:) = ((0.5*iOMGeTildeDerMenosR + eTildeDerechaMenosR/deltaT).*aTildeDerechaMenosR(iTiempo-1,:) + fTildeMenosRProm)./(eTildeDerechaMenosR/deltaT - 0.5*iOMGeTildeDerMenosR); 
 
 						fTOmCeroTmUno = dot(vectoresIzquierdaOmegaCero, ...
-						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+						              repmat(forzanteExterno(:,iTiempo-1), 1, cuantosVectoresOmegaCero))*areaTotal;
 						fTOmCeroT = dot(vectoresIzquierdaOmegaCero, ... 
-							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresOmegaCero))*deltaX*deltaY;
+							  repmat(forzanteExterno(:,iTiempo), 1, cuantosVectoresOmegaCero))*areaTotal;
 						fTildeOmCeroProm = 0.5*(fTOmCeroTmUno + fTOmCeroT);
 
 						aTildeDerechaOmegaCero(iTiempo,:) = ((0.5*iOMGeTildeDerOmegaCero + eTildeDerechaOmegaCero/deltaT).*aTildeDerechaOmegaCero(iTiempo-1,:) + fTildeOmCeroProm)./(eTildeDerechaOmegaCero/deltaT - 0.5*iOMGeTildeDerOmegaCero); 
@@ -367,7 +445,61 @@ classdef AnalisisModal < Hidrodinamica
 					thisAnalisisModal.Solucion = solAcumulada;
 					thisAnalisisModal.Tiempo = tiempoCalculo;
 
+				elseif strcmpi(thisAnalisisModal.RegimenTemporal, 'amplituddesdesolucion')
+					% Este caso es aquel en el que la simulacion ha sido resuelta
+					% por algun otro metodo (Crank Nicolson) y a partir de ella quiero 
+					% extraer la amplitud de oscilacion de cada modo en el tiempo 
+					% Basta con sólo calcular la amplitud modal por la derecha
+					% para +r. Los de OmegaCero deben ser calculados tambien.
+
+					% Calculo amplitudes para cada modo dada la solucion 
+					solHidro = getHidrodinamica(simulacion);
+
+					if length(solHidro) ~= 1
+		
+						error('Aun no se implementa el caso en que la Hidrodinamica tiene mas de un elemento')					
+		
+					end
+
+					solTiempo = solHidro.Solucion;
+
+					% Calculo para vectores Mas R. Recordar que vectores de izquierda son iguales a los de la derecha
+
+					cuantosMasR = length(vectoresDerechaMasR(1,:));
+					ampMasR = zeros(cuantosMasR, length(tiempoForzante));
+					energiaModoR = zeros(cuantosMasR, length(tiempoForzante));
+
+					for iModo = 1:cuantosMasR
+			
+						ampMasR(iModo, :) = dot(repmat(vectoresDerechaMasR(:,iModo), 1, length(tiempoForzante)), M*solTiempo)*areaTotal/(eTildeDerechaMasR(iModo));
+						energiaModoR(iModo, :) = real(eTildeDerechaMasR(iModo)*conj(ampMasR(iModo, :)).*ampMasR(iModo, :));
+
+					end
+
+					cuantosOmegaCero = length(vectoresDerechaOmegaCero(1,:));
+					ampOmegaCero = zeros(cuantosOmegaCero, length(tiempoForzante));
+					energiaOmegaCero = zeros(cuantosOmegaCero, length(tiempoForzante));
+
+					for iModo = 1:cuantosOmegaCero
+			
+						ampOmegaCero(iModo, :) = dot(repmat(vectoresDerechaOmegaCero(:,iModo), 1, length(tiempoForzante)), M*solTiempo)*areaTotal/(eTildeDerechaOmegaCero(iModo));
+						energiaOmegaCero(iModo, :) = 0.5*real(eTildeDerechaOmegaCero(iModo)*conj(ampOmegaCero(iModo, :)).*ampOmegaCero(iModo, :));
+
+					end
+
+%					plot(tiempoForzante, sum(real(energiaModoR)))
+%					hold on 
+%					graficaEnergiaTiempo(Grafico(), simulacion)
+			
+					sol.ampMasR = ampMasR;
+					sol.energiaModoR = energiaModoR;
+					sol.ampOmegaCero = ampOmegaCero;
+					sol.energiaOmegaCero = energiaOmegaCero;
+					thisAnalisisModal.Solucion = sol;
+					thisAnalisisModal.Tiempo = tiempoForzante;
+
 				else
+
 					error('Régimen temporal no definido')
 				end %if
 		end %function amplitudModal
@@ -376,22 +508,4 @@ end % classdef
 
 %%%%%%%%%%%%%%%%%%%%%%% THRASH
 		 	
-%%				if(strcmpi(thisAnalisisModal.RegimenTemporal, 'modoslibres'))
-%%					[vectoresDerecha, valoresDerecha]= eigs(full(K), full(M), length(K));
-%%				else					
-
-%%					[vectoresDerecha2, valoresDerecha2]= eig(full([K + C]), full(M));
-%%					[vectoresDerecha3, valoresDerecha3]= eigs(full(K), full(M));
-%%				end
-
-
-
-
-%%						for iTiempo = 1:nTiempoCalculo
-%%							graficaModo(simulacion, solAcumulada(:,iTiempo))
-%%							pause(0.01)
-%%						end
-
-%%						keyboard
-
 

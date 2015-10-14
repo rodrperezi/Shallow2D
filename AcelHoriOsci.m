@@ -49,16 +49,26 @@ classdef AcelHoriOsci < Forzante
 			Nns = malla.numeroNodosV;
 			New = malla.numeroNodosU;
 
-			nCiclos = 5;
-			datosPorCiclo = 50;
+			nCiclos = 60;
+			datosPorCiclo = 30;
 			amplitud = getAmplitud(thisAcelHoriOsci);			
 			frecAngular = getFrecAngular(thisAcelHoriOsci);
 			anguloDireccion = getAnguloDireccion(thisAcelHoriOsci);
-			thisAcelHoriOsci.Tiempo = 0:(2*pi/frecAngular)/(datosPorCiclo):nCiclos*(2*pi/frecAngular).';
-			tiempo = thisAcelHoriOsci.Tiempo;
+
+			% Agrego un tramo inicial estatico
+
+			deltaT = (2*pi/frecAngular)/(datosPorCiclo);
+			datosEstaticos = 5*datosPorCiclo;
+			tiempoEstatico = 0:deltaT:datosEstaticos*deltaT.';
+			acelEstatica = zeros(1,length(tiempoEstatico));
+			tiempoMovil = 0:deltaT:nCiclos*(2*pi/frecAngular).';
+			% acelMovil = -amplitud*frecAngular^2*sin(frecAngular*tiempoMovil);
+			acelMovil = amplitud*frecAngular^2*sin(frecAngular*tiempoMovil);
+			thisAcelHoriOsci.Tiempo = [tiempoEstatico, tiempoMovil ...
+						  + max(tiempoEstatico)];
 			batx = bat(Neta + 1: Neta + New);
 			baty = bat(Neta + New + 1: New + Neta + Nns);
-			thisAcelHoriOsci.aceleracion = -amplitud*frecAngular^2*sin(frecAngular*tiempo);
+			thisAcelHoriOsci.aceleracion = [acelEstatica, acelMovil];
 			thisAcelHoriOsci.DireccionX = -rho*batx*sparse(thisAcelHoriOsci.aceleracion*cos(anguloDireccion));
 			thisAcelHoriOsci.DireccionY = -rho*baty*sparse(thisAcelHoriOsci.aceleracion*sin(anguloDireccion));
 

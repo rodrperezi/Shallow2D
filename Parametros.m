@@ -7,6 +7,7 @@ classdef Parametros
 	% son algunos ejemplos.     
     
     properties
+
 	aceleracionGravedad
 	kappaVonKarman
 	zoAsperezaAgua
@@ -17,12 +18,16 @@ classdef Parametros
 	difusionOD
 	saturacionOD
 	porosidadPhi
+	dispLong 
+	dispTrans 
+	factorUTilde
 
     end
 
 	methods
 
 		function thisParametros = Parametros()
+
 			thisParametros.aceleracionGravedad = 9.81; % [m/s2]
 			thisParametros.kappaVonKarman = 0.41;
 			thisParametros.zoAsperezaAgua = 0.0028; % [m] %Liang 06
@@ -33,8 +38,9 @@ classdef Parametros
 			thisParametros.difusionOD = 1.82e-9; % [m2/s] (Steinberger 1999)
 			thisParametros.saturacionOD = 8.82e-3; % [kg/m3] (Steinberger 1999)
 			thisParametros.porosidadPhi = 0.9; % [m2/s] (Steinberger 1999)
-			thisParamertos.dispLong = 5.93; % Elder
-			thisParamertos.dispTrans = 0.23; % Elder
+			thisParametros.dispLong = 5.93; % Elder
+			thisParametros.dispTrans = 0.23; % Elder
+			thisParametros.factorUTilde = sqrt(20);
 			
 		end
 

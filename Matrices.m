@@ -42,6 +42,7 @@ classdef Matrices < hgsetget
 		K
 		C
 		f
+		coefFriccion
 		Tiempo
 		Tipo
 		
@@ -106,7 +107,6 @@ classdef Matrices < hgsetget
 			hoeta =  batimetria.hoNodosEta;
 			howe =  batimetria.hoNodosU;
 			hons =  batimetria.hoNodosV;
-			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg
 
 			kap = parametros.kappaVonKarman;
 			zo = parametros.zoAsperezaAgua;
@@ -133,7 +133,7 @@ classdef Matrices < hgsetget
 			      g*[-hons(IDns(:,1))/dy; hons(IDns(etaNorteExiste,1))/dy]);
 			K32 = sparse(Neta, New);
 			K33 = sparse(Neta, Nns);
-
+% keyboard
 			% Construcción Matriz M
 
 			M11 = sparse(fila,fila,g);
@@ -145,7 +145,7 @@ classdef Matrices < hgsetget
 			M31 = M21;
 			M32 = M12;
 			M33 = sparse([fila; Neta],[IDns(:,1); Nns], [hons(IDns(:,1)); 0]);
-
+% keyboard
 			% Elimino variables fantasma. Se eliminan los nodos \eta 
 			% E y N que no existen. Esto equivale a eliminar las 
 			% filas o ecuaciones que incluyen estas variables
@@ -181,7 +181,6 @@ classdef Matrices < hgsetget
 			M22(:,[IDwe(nBIz,1);IDwe(nBDe,2)]) = [];
 			M32(:,[IDwe(nBIz,1);IDwe(nBDe,2)]) = [];
 
-
 			K13(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			K23(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			K33(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
@@ -189,17 +188,16 @@ classdef Matrices < hgsetget
 			M13(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			M23(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
 			M33(:,[IDns(nBSu,1);IDns(nBIn,2)]) = [];
-
+% keyboard
 			% Ordeno submatrices
-
 			K = i*rho*[K11,K12,K13;K21,K22,K23;K31,K32,K33];  
 			M = rho*[M11,M12,M13;M21,M22,M23;M31,M32,M33];
-
-			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
-				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
-				K = K*longCar/(rho*g*hprom);
-				M = 0.5*[M11/g,M12,M13;M21,M22/hprom,M23;M31,M32,M33/hprom];
-			end
+% keyboard
+%			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+%				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+%				K = K*longCar/(rho*g*hprom);
+%				M = 0.5*[M11/g,M12,M13;M21,M22/hprom,M23;M31,M32,M33/hprom];
+%			end
 
 			thisMatrices.M = M;
 			thisMatrices.K = K;
@@ -238,7 +236,6 @@ classdef Matrices < hgsetget
 			parametros = getParametros(cuerpo);
 			g = parametros.aceleracionGravedad;
 			rho = cuerpo.Fluido.densidadRho;
-			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg
 
 			% Cargo lista de forzantes y arroja error si es que 
 			% hay más de uno actuando sobre el sistema.
@@ -305,12 +302,12 @@ classdef Matrices < hgsetget
 			borrarBordes = [ID(nBIz,1);ID(nBDe,2);ID(nBSu,3);ID(nBIn,4)]; 
 			forzanteExterno(borrarBordes, :) = [];
 
-			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
-				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
-				forzanteExterno = forzanteExterno*longCar/(rho*g*hprom^2);
-				tiempoCar = 2*longCar/(sqrt(g*hprom));
-				vectorTiempo = vectorTiempo/tiempoCar;
-			end
+%			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+%				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+%				forzanteExterno = forzanteExterno*longCar/(rho*g*hprom^2);
+%				tiempoCar = 2*longCar/(sqrt(g*hprom));
+%				vectorTiempo = vectorTiempo/tiempoCar;
+%			end
 
 			thisMatrices.f = forzanteExterno;
 			thisMatrices.Tiempo = vectorTiempo;
@@ -342,7 +339,6 @@ classdef Matrices < hgsetget
 			nBDe = malla.numeroBordesDerecho;
 			nBSu = malla.numeroBordesSuperior;
 			nBIn = malla.numeroBordesInferior;
-			hprom = 0.971*cuerpo.Geometria.alturaH;	% Especial para Kranenburg			
 	
 			rho = cuerpo.Fluido.densidadRho;
 			g = parametros.aceleracionGravedad;
@@ -377,17 +373,18 @@ classdef Matrices < hgsetget
 		
 			switch tipoForzante
 				case 'vientoUniforme'
-					uAsterisco = getUAsterisco(listaForzantes{1});
-					uTilde = sqrt(20)*uAsterisco;
-					factorFriccion = parametros.factorFriccion;	
-					coefFriccionLineal = sqrt(2)*factorFriccion*uTilde;
+					coefFriccionLineal = listaForzantes{1}.coeficienteFriccion;
+%					uAsterisco = getUAsterisco(listaForzantes{1});
+%					uTilde = parametros.factorUTilde*uAsterisco;
+%					factorFriccion = parametros.factorFriccion;	
+%					coefFriccionLineal = sqrt(2)*factorFriccion*uTilde;
 				case 'acelHoriOsci'
 					bat = getCompiladoBatimetria(simulacion);
 					amplitud = getAmplitud(listaForzantes{1});
 					frecAngular = getFrecAngular(listaForzantes{1});
 					uTilde = sqrt(20)*sqrt(amplitud*frecAngular^2*mean(bat));
 					factorFriccion = parametros.factorFriccion;
-					coefFriccionLineal = sqrt(2)*factorFriccion*uTilde;
+					coefFriccionLineal = 2.5*sqrt(2)*factorFriccion*uTilde;
 				case 'serieAceleracionOsci'
 					bat = getCompiladoBatimetria(simulacion);
 					amplitud = getAmplitud(listaForzantes{1});
@@ -397,6 +394,10 @@ classdef Matrices < hgsetget
 					% coefFriccionLineal = sqrt(2)*factorFriccion*uTilde;
 					coefFriccionLineal = 2.5*sqrt(2)*factorFriccion*uTilde;
 					% 2.5 parece ser un buen número para ajustar velMedidas
+				case 'serieAcelExperimento'
+					coefFriccionLineal = listaForzantes{1}.CoeficienteFriccion;
+				case 'serieAcelExperimentoSeno'
+					coefFriccionLineal = listaForzantes{1}.CoeficienteFriccion;
 				otherwise 
 					error(['No se ha definido un coeficiente de fricción para ', tipoForzante])
 			end
@@ -442,12 +443,13 @@ classdef Matrices < hgsetget
 
 			C = i*rho*[C11,C12,C13;C21,C22,C23;C31,C32,C33];
 
-			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
-				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
-				C = C*longCar/(rho*hprom*sqrt(g*hprom));
-			end
+%			if(strcmpi(thisMatrices.Tipo, 'adimensional'))
+%				longCar = 2*cuerpo.Geometria.radioR; %Especial para Kranenburg
+%				C = C*longCar/(rho*hprom*sqrt(g*hprom));
+%			end
 
 			thisMatrices.C = C;
+			thisMatrices.coefFriccion = coefFriccionLineal;
 
 		end % function matrizC
 	end %methods

@@ -22,7 +22,7 @@ classdef Resultados
 	properties
 
 		Hidrodinamica
-		TransporteOD
+		Transporte
 
 	end
 

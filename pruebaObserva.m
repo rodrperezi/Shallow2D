@@ -8,19 +8,57 @@ set(0,'DefaultTextFontname', 'times')
 set(0,'DefaultTextFontSize', 9)
 
 % DATOS GEOMETRIA
+
 R = 200;
 H = 0.15;
 centroMasa = [0, 0];
 
 % CONSTRUCCION MODELO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-kranPrueba = GeoKranenburg(GeoKranenburg(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa);
+% kranPrueba = GeoKranenburg(GeoKranenburg(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa);
+kranPrueba = GeoKranenburgNew(GeoKranenburgNew(),'radioR', R, 'alturaH', H, 'centroMasa', centroMasa, 'fracDeltaX', 1/20);
 cuerpoPrueba = addGeometria(Cuerpo(), kranPrueba);
-sim = Simulacion(Simulacion(), cuerpoPrueba);
-sim = addForzante(sim, VientoUniforme(Forzante(), 'uAsterisco', 1e-3, 'anguloDireccion', pi/2));
-sim = addMatrices(sim, Matrices(sim));
-sim = addResultados(sim, CrankNicolson(sim));
 
+simAM = Simulacion(Simulacion(), cuerpoPrueba);
+simAM = addForzante(simAM, VientoUniforme(Forzante(), 'uAsterisco', 1e-3, 'anguloDireccion', pi/2));
+simAM = addMatrices(simAM, Matrices(simAM));
+simAM = addResultados(simAM, AnalisisModal(simAM, 'permanente'));
+
+[M, K, C] = getMatrices(simAM);
+
+solAM = simAM.Resultados.Hidrodinamica.Solucion;
+enAM = 0.5*dot(solAM, M*solAM)*areaSuperficial(simAM);
+
+simCN = Simulacion(Simulacion(), cuerpoPrueba);
+simCN = addForzante(simCN, VientoUniforme(Forzante(), 'uAsterisco', 1e-3, 'anguloDireccion', pi/2));
+simCN = addMatrices(simCN, Matrices(simCN));
+simCN = addResultados(simCN, CrankNicolson(simCN));
+
+solCN = simCN.Resultados.Hidrodinamica.Solucion(:,end);
+enCN = 0.5*dot(solCN, M*solCN)*areaSuperficial(simCN);
+
+save('sim20.mat', 'simAM', 'simCN', 'enAM','enCN')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+
+
+
+% sim = solucion2D(sim, 'hidrodinamica');
+%[M K C] = getMatrices(sim);
+%[kmascLI1 id1] = licols(full([K+C]), 1e-10);
+%[kmascLI2 id2] = licols(full([K+C].'), 1e-10);
+%di1 = diff(id1);
+%di2 = diff(id2);
+%fi1 = find(di1 ~= 1);
+%fi2 = find(di2 ~= 1);
+
+%col1 = fi1 + 1
+%col2 = fi2 + 1
+
+%[Neta Nu Nv] = getNumeroNodos(sim)
+%graficaMalla(Grafico(), sim)
+
+%keyboard
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
