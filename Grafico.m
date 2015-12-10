@@ -266,7 +266,7 @@ classdef Grafico < hgsetget
 
 			hold off
 			handle.barraColor = colorbar;
-			caxis([0.15*min(kt) max(kt)])
+			caxis([0.05*min(kt) 0.95*max(kt)])
 			xlabel(handle.barraColor, '$k_t \left[m s^{-1}\right]$', 'interpreter', 'latex')
 
 			handle.ejes = gca;
@@ -301,7 +301,7 @@ classdef Grafico < hgsetget
 
 			hold off
 			handle.barraColor = colorbar;
-			caxis([min(conc) 1.3*max(conc)])
+			caxis([1.09*min(conc) 1.15*max(conc)])
 			xlabel(handle.barraColor, '$CC_s^{-1}$', 'interpreter', 'latex')
 
 			handle.ejes = gca;

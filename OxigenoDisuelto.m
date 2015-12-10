@@ -65,8 +65,8 @@ classdef OxigenoDisuelto < Masa
 			numeroSc = nuAgua/difOD;
 
 			kt = 27.08*uAsterisco*numeroSc^(-2/3)./(numeroReynolds);
-			erre = 1/86400;
-			S = 2*phiPorosidad*erre*Ds; % kg/m/s
+			erre = 1/86400; % kg/(m^3s)
+			S = 2*phiPorosidad*erre*Ds; % kg/(m s^2)
 
 			% Ecuaciones que caracterizan flujo de OD hacia sedimentos (Nakamura & Stefan, 1994)	
 			funcionFlujoSed = inline('S/2*(k.^(-1) - sqrt(k.^(-2) + 4*C/S))','S','k','C');
